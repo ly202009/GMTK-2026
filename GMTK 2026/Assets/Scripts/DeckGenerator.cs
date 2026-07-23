@@ -551,7 +551,7 @@ public sealed class DeckGenerator : MonoBehaviour
         return i;
     }
 
-    private static void Shuffle<T>(List<T> deck)
+    public static void Shuffle<T>(List<T> deck)
     {
         for (int i = deck.Count - 1; i > 0; i--)
         {
@@ -560,7 +560,7 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
-    private GameObject CreateCard(CardData data)
+    public GameObject CreateCard(CardData data)
     {
         GameObject card = Instantiate(cardTemplate, Vector3.zero, cardTemplate.transform.rotation, cardTemplate.transform.parent);
         card.transform.localScale = new Vector3(card.transform.localScale.x, card.transform.localScale.x, 1);
