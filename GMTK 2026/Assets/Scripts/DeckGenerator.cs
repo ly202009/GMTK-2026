@@ -61,10 +61,13 @@ public sealed class DeckGenerator : MonoBehaviour
     private List<GameObject> drawPile = new();
     private HashSet<GameObject> animatingCards = new();
     private GameObject selectedHandCard;
+    private GameObject pressedCard;
     private GameObject draggedCard;
+    private Vector2 pressedPosition;
     private bool reshuffledCurrentState;
     private bool cardsChanged;
     private float cardMoveDuration = .18f;
+    private float dragThreshold = .15f;
 
     private void Start()
     {
@@ -109,8 +112,26 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandleClicks()
     {
-        if(draggedCard == null && !Mouse.current.leftButton.wasPressedThisFrame) return;
+        if(draggedCard == null && pressedCard == null
+        && !Mouse.current.leftButton.wasPressedThisFrame) return;
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+
+        if(pressedCard != null)
+        {
+            if(Mouse.current.leftButton.isPressed
+            && Vector2.Distance(mousePosition, pressedPosition) > dragThreshold)
+            {
+                draggedCard = pressedCard;
+                pressedCard = null;
+                selectedHandCard = null;
+            }
+            else if(Mouse.current.leftButton.wasReleasedThisFrame)
+            {
+                selectedHandCard = pressedCard;
+                pressedCard = null;
+                return;
+            }
+        }
 
         if(draggedCard != null)
         {
@@ -146,8 +167,8 @@ public sealed class DeckGenerator : MonoBehaviour
 
         if (handCards.Contains(clickedCard))
         {
-            selectedHandCard = clickedCard;
-            draggedCard = clickedCard;
+            pressedCard = clickedCard;
+            pressedPosition = mousePosition;
             return;
         }
 
@@ -176,7 +197,8 @@ public sealed class DeckGenerator : MonoBehaviour
                 drawPile.RemoveAt(drawPile.Count - 1);
                 handCards[i] = card;
                 reshuffledCurrentState = false;
-                cardsChanged = true;
+                cardsChanged = false;
+                StartCoroutine(AnimateCardToHand(card, i));
             }
         }
    }
@@ -201,6 +223,7 @@ public sealed class DeckGenerator : MonoBehaviour
             for(int i = 0; i < handCards.Count; i++)
             {
                 if(handCards[i] == null) continue;
+                if(animatingCards.Contains(handCards[i])) continue;
                 if((cardData[handCards[i]].properties & CardData.AutoPlay) == 0) continue;
 
                 for(int j = 0; j < piles.Length; j++)
@@ -316,15 +339,22 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void RenderCards()
     {
-        float firstCardX = -(HandSize - 1) * HandSpacing * .5f;
-
         for(int i = 0; i < handCards.Count; i++)
         {
             if(handCards[i] == null) continue;
-            if(handCards[i] != draggedCard)
-                handCards[i].transform.position = new Vector3(firstCardX + i * HandSpacing, HandY, 0);
-            SetSortingOrder(handCards[i], handCards[i] == draggedCard ? 1000 : 0);
-            handCards[i].GetComponent<Collider2D>().enabled = handCards[i] != draggedCard;
+            if(handCards[i] != draggedCard && !animatingCards.Contains(handCards[i]))
+            {
+                Vector3 handPosition = GetHandPosition(i);
+                if(handCards[i] == selectedHandCard) handPosition.y += .35f;
+                float amount = 1 - Mathf.Exp(-18 * Time.deltaTime);
+                handCards[i].transform.position =
+                    Vector3.Lerp(handCards[i].transform.position, handPosition, amount);
+            }
+            int sortingOrder = handCards[i] == draggedCard ? 1000 :
+                handCards[i] == selectedHandCard ? 100 : 0;
+            SetSortingOrder(handCards[i], sortingOrder);
+            handCards[i].GetComponent<Collider2D>().enabled =
+                handCards[i] != draggedCard && !animatingCards.Contains(handCards[i]);
             handCards[i].GetComponentInChildren<Canvas>(true).enabled = true;
         }
 
@@ -401,10 +431,37 @@ public sealed class DeckGenerator : MonoBehaviour
         animatingCards.Remove(card);
     }
 
+    private IEnumerator AnimateCardToHand(GameObject card, int handIndex)
+    {
+        animatingCards.Add(card);
+        Vector3 startPosition = card.transform.position;
+        Vector3 endPosition = GetHandPosition(handIndex);
+        float time = 0;
+
+        while(time < cardMoveDuration)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / cardMoveDuration);
+            amount = amount * amount * (3 - 2 * amount);
+            card.transform.position = Vector3.Lerp(startPosition, endPosition, amount);
+            yield return null;
+        }
+
+        card.transform.position = endPosition;
+        animatingCards.Remove(card);
+        cardsChanged = true;
+    }
+
     private Vector3 GetPilePosition(int pileIndex)
     {
         float x = (pileIndex - (numberOfPiles - 1) * .5f) * 2;
         return new Vector3(x, SpeedPileY, 0);
+    }
+
+    private Vector3 GetHandPosition(int handIndex)
+    {
+        float x = -(HandSize - 1) * HandSpacing * .5f + handIndex * HandSpacing;
+        return new Vector3(x, HandY, 0);
     }
 
     private int GetEffectiveCardIndex(int pileIndex)
@@ -492,25 +549,6 @@ public sealed class DeckGenerator : MonoBehaviour
             label.margin = new Vector4(5, 5, 5, 0);
         }
 
-        GameObject highlight = new GameObject("Highlight");
-        highlight.layer = card.layer;
-        highlight.transform.SetParent(card.transform, false);
-
-        LineRenderer highlightRenderer = highlight.AddComponent<LineRenderer>();
-        highlightRenderer.useWorldSpace = false;
-        highlightRenderer.loop = true;
-        highlightRenderer.positionCount = 4;
-        highlightRenderer.SetPosition(0, new Vector3(-.55f, -.8f, 0));
-        highlightRenderer.SetPosition(1, new Vector3(-.55f, .8f, 0));
-        highlightRenderer.SetPosition(2, new Vector3(.55f, .8f, 0));
-        highlightRenderer.SetPosition(3, new Vector3(.55f, -.8f, 0));
-        highlightRenderer.widthMultiplier = .04f;
-        highlightRenderer.numCornerVertices = 2;
-        highlightRenderer.sharedMaterial = cardRenderer.sharedMaterial;
-        highlightRenderer.startColor = new Color(1, .85f, .1f);
-        highlightRenderer.endColor = new Color(1, .85f, .1f);
-        highlightRenderer.enabled = false;
-
         if (card.GetComponent<Collider2D>() == null) card.AddComponent<BoxCollider2D>();
 
         card.SetActive(true);
@@ -521,7 +559,6 @@ public sealed class DeckGenerator : MonoBehaviour
     {
         int cardOrder = sortingOrder * 3 + 10;
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
-        LineRenderer highlightRenderer = card.transform.Find("Highlight").GetComponent<LineRenderer>();
         int transparentIndex =
             (cardData[card].properties & CardData.Transparent) / CardData.Transparent;
         int wildCardIndex =
@@ -532,8 +569,6 @@ public sealed class DeckGenerator : MonoBehaviour
         cardRenderer.sharedMaterial = cardMaterials[cardMaterialIndex];
         if(!animatingCards.Contains(card)) cardRenderer.color = Color.white;
         cardRenderer.sortingOrder = cardOrder;
-        highlightRenderer.sortingOrder = cardOrder + 1;
-        highlightRenderer.enabled = card == selectedHandCard;
 
         TMP_Text[] labels = card.GetComponentsInChildren<TMP_Text>(true);
         for(int i = 0; i < labels.Length; i++)
