@@ -804,7 +804,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d77d42ade5cb4c0ea71b7716b25b7c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeckGenerator
-  cardTemplate: {fileID: 1194196875}
+  cardTemplate: {fileID: 0}
   transparentCardMaterial: {fileID: 2100000, guid: b226c79df8e54ad8b221b3cdf117552d, type: 2}
   wildCardMaterial: {fileID: 2100000, guid: d448e9bf10a74cfac443d5efa339774f, type: 2}
   transparentWildCardMaterial: {fileID: 2100000, guid: e559fac021b84dfbd554e6fab44a885a, type: 2}
@@ -837,7 +837,7 @@ RectTransform:
   m_GameObject: {fileID: 2140000000}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2140000011}
@@ -1114,7 +1114,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 537332997}
   - {fileID: 150891060}
-  - {fileID: 1194196877}
   - {fileID: 340990210}
   - {fileID: 2130000001}
+  - {fileID: 1194196877}
   - {fileID: 2140000001}
