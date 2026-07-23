@@ -410,7 +410,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private int GetEffectiveCardIndex(int pileIndex)
     {
         int i = piles[pileIndex].Count - 1;
-        if((cardData[piles[pileIndex][i]].properties & CardData.Transparent) != 0
+        while((cardData[piles[pileIndex][i]].properties & CardData.Transparent) != 0
         && i > 0) i--;
         return i;
     }
