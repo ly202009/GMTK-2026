@@ -37,7 +37,6 @@ public sealed class DeckGenerator : MonoBehaviour
         (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f))
     };
 
-    private const int HandSize = 5;
     private const float HandSpacing = 1.5f;
     private const float HandY = -2.3f;
     private const float SpeedPileY = 1.3f;
@@ -49,7 +48,6 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
 
-    private int numberOfPiles = 2;
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
     private Sprite cardBack;
@@ -57,7 +55,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private Dictionary<GameObject, CardData> cardData = new();
     private Dictionary<GameObject, Sprite> cardFaces = new();
     private List<GameObject> handCards = new();
-    private List<GameObject>[] piles;
+    private List<List<GameObject>> piles = new();
     private List<GameObject> drawPile = new();
     private HashSet<GameObject> animatingCards = new();
     private GameObject selectedHandCard;
@@ -66,11 +64,24 @@ public sealed class DeckGenerator : MonoBehaviour
     private Vector2 pressedPosition;
     private bool reshuffledCurrentState;
     private bool cardsChanged;
+    private int numberOfPiles;
+    private int handSize;
+    private bool allowDoubles;
+    private bool allowSuitMatching;
+    private bool handInvalidGain;
+    private bool autoDraw;
     private float cardMoveDuration = .18f;
     private float dragThreshold = .15f;
 
     private void Start()
     {
+        numberOfPiles = RunData.instance.numberOfPiles;
+        handSize = RunData.instance.handSize;
+        allowDoubles = RunData.instance.allowDoubles;
+        allowSuitMatching = RunData.instance.allowSuitMatching;
+        handInvalidGain = RunData.instance.handInvalidGain;
+        autoDraw = RunData.instance.autoDraw;
+
         List<CardData> deck = CreateDeck();
         Shuffle(deck);
         cardSprites = Resources.LoadAll<Sprite>("ClassicCards");
@@ -91,10 +102,9 @@ public sealed class DeckGenerator : MonoBehaviour
         };
         cardTemplate.SetActive(false);
 
-        piles = new List<GameObject>[numberOfPiles];
         int deckIndex = 0;
 
-        for (int i = 0; i < HandSize; i++)
+        for (int i = 0; i < handSize; i++)
         {
             handCards.Add(CreateCard(deck[deckIndex]));
             deckIndex++;
@@ -102,7 +112,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
         for (int i = 0; i < numberOfPiles; i++)
         {
-            piles[i] = new List<GameObject>();
+            piles.Add(new List<GameObject>());
             piles[i].Add(CreateCard(deck[deckIndex]));
             deckIndex++;
         }
@@ -150,7 +160,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
             if(Mouse.current.leftButton.wasReleasedThisFrame)
             {
-                for(int i = 0; i < piles.Length; i++)
+                for(int i = 0; i < piles.Count; i++)
                 {
                     GameObject pileCard = piles[i][piles[i].Count - 1];
                     if(!pileCard.GetComponent<Collider2D>().OverlapPoint(mousePosition)) continue;
@@ -179,7 +189,7 @@ public sealed class DeckGenerator : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < piles.Length; i++)
+        for (int i = 0; i < piles.Count; i++)
         {
             if (clickedCard == piles[i][piles[i].Count - 1])
             {
@@ -193,21 +203,7 @@ public sealed class DeckGenerator : MonoBehaviour
         }
 
         if (drawPile.Count > 0 && clickedCard == drawPile[drawPile.Count - 1])
-        {
-            selectedHandCard = null;
-
-            for (int i = 0; i < handCards.Count && drawPile.Count > 0; i++)
-            {
-                if (handCards[i] != null) continue;
-
-                GameObject card = drawPile[drawPile.Count - 1];
-                drawPile.RemoveAt(drawPile.Count - 1);
-                handCards[i] = card;
-                reshuffledCurrentState = false;
-                cardsChanged = false;
-                StartCoroutine(AnimateCardToHand(card, i));
-            }
-        }
+            DrawCards();
    }
 
     private void PlayCard(GameObject card, int pileIndex)
@@ -218,6 +214,23 @@ public sealed class DeckGenerator : MonoBehaviour
         if(selectedHandCard == card) selectedHandCard = null;
         reshuffledCurrentState = false;
         cardsChanged = (cardData[card].properties & CardData.Transparent) == 0;
+        if(autoDraw) DrawCards();
+    }
+
+    private void DrawCards()
+    {
+        selectedHandCard = null;
+        for(int i = 0; i < handCards.Count && drawPile.Count > 0; i++)
+        {
+            if(handCards[i] != null) continue;
+
+            GameObject card = drawPile[drawPile.Count - 1];
+            drawPile.RemoveAt(drawPile.Count - 1);
+            handCards[i] = card;
+            reshuffledCurrentState = false;
+            cardsChanged = false;
+            StartCoroutine(AnimateCardToHand(card, i));
+        }
     }
 
     private void HandleAutoPlay()
@@ -233,7 +246,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 if(animatingCards.Contains(handCards[i])) continue;
                 if((cardData[handCards[i]].properties & CardData.AutoPlay) == 0) continue;
 
-                for(int j = 0; j < piles.Length; j++)
+                for(int j = 0; j < piles.Count; j++)
                 {
                     if(!CardsWork(handCards[i], j)) continue;
 
@@ -256,7 +269,7 @@ public sealed class DeckGenerator : MonoBehaviour
         foreach(GameObject cardObj in handCards)
         {
             if(cardObj == null) continue;
-            for(int i = 0; i < piles.Length; i++)
+            for(int i = 0; i < piles.Count; i++)
                 if(CardsWork(cardObj, i)) return true;
         }
         return false;
@@ -269,6 +282,9 @@ public sealed class DeckGenerator : MonoBehaviour
         if ((cardData[card].properties & CardData.WildCard) != 0
         || (cardData[topCard].properties & CardData.WildCard) != 0) return true;
 
+        if(allowSuitMatching && cardData[card].suit == cardData[topCard].suit)
+            return true;
+
         int differenceLimit = 2;
         if((cardData[card].properties & CardData.Flexible) != 0
         || (cardData[topCard].properties & CardData.Flexible) != 0)
@@ -280,6 +296,7 @@ public sealed class DeckGenerator : MonoBehaviour
             {
                 int difference = Mathf.Abs(value1 - value2);
                 int cyclicDifference = Mathf.Min(difference, 13 - difference);
+                if(allowDoubles && cyclicDifference == 0) return true;
                 if(cyclicDifference > 0 && cyclicDifference < differenceLimit) return true;
             }
         }
@@ -304,7 +321,7 @@ public sealed class DeckGenerator : MonoBehaviour
         cardsChanged = true;
 
         bool foundPlayableTop = IsHandPlayable();
-        for(int i = 0; i < piles.Length && !foundPlayableTop; i++)
+        for(int i = 0; i < piles.Count && !foundPlayableTop; i++)
         {
             for(int j = 0; j < piles[i].Count && !foundPlayableTop; j++)
             {
@@ -364,7 +381,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 handCards[i] != draggedCard && !animatingCards.Contains(handCards[i]);
         }
 
-        for(int i = 0; i < piles.Length; i++)
+        for(int i = 0; i < piles.Count; i++)
         {
             Vector3 pilePosition = GetPilePosition(i);
 
@@ -462,13 +479,14 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private Vector3 GetPilePosition(int pileIndex)
     {
-        float x = (pileIndex - (numberOfPiles - 1) * .5f) * 2;
+        float x = (pileIndex - (piles.Count - 1) * .5f) * 2;
         return new Vector3(x, SpeedPileY, 0);
     }
 
     private Vector3 GetHandPosition(int handIndex)
     {
-        float x = -(HandSize - 1) * HandSpacing * .5f + handIndex * HandSpacing;
+        float x = -(handSize - 1) * HandSpacing * .5f
+            + handIndex * HandSpacing;
         return new Vector3(x, HandY, 0);
     }
 
