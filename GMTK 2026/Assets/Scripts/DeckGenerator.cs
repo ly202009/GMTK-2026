@@ -32,7 +32,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private static (int property, string name)[] PropertyNames =
     {
         (CardData.Transparent, "Transparent"),
-        (CardData.AutoPlay, "Auto Play"),
+        (CardData.AutoPlay, ""),
         (CardData.BonusTime, "Bonus Time"),
         (CardData.WildCard, "Wild Card"),
         (CardData.Flexible, "Flexible")
@@ -54,6 +54,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
     private Sprite cardBack;
+    private Sprite autoPlaySeal;
     private Dictionary<GameObject, CardData> cardData = new();
     private Dictionary<GameObject, Sprite> cardFaces = new();
     private List<GameObject> handCards = new();
@@ -75,6 +76,7 @@ public sealed class DeckGenerator : MonoBehaviour
         Shuffle(deck);
         cardSprites = Resources.LoadAll<Sprite>("ClassicCards");
         cardBack = Resources.LoadAll<Sprite>("LightClassic")[0];
+        autoPlaySeal = Resources.LoadAll<Sprite>("Autoplay")[0];
         cardMaterials = new Material[]
         {
             cardTemplate.GetComponent<SpriteRenderer>().sharedMaterial,
@@ -383,6 +385,7 @@ public sealed class DeckGenerator : MonoBehaviour
             SpriteRenderer drawRenderer = drawPile[i].GetComponent<SpriteRenderer>();
             drawRenderer.sprite = cardBack;
             drawRenderer.sharedMaterial = cardMaterials[0];
+            drawPile[i].transform.Find("Auto Play Seal").GetComponent<SpriteRenderer>().enabled = false;
             drawPile[i].GetComponent<Collider2D>().enabled = isTopCard;
             drawPile[i].GetComponentInChildren<Canvas>(true).enabled = false;
         }
@@ -408,6 +411,8 @@ public sealed class DeckGenerator : MonoBehaviour
         if((cardData[card].properties & CardData.Transparent) != 0)
         {
             SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
+            SpriteRenderer sealRenderer =
+                card.transform.Find("Auto Play Seal").GetComponent<SpriteRenderer>();
             card.GetComponentInChildren<Canvas>(true).enabled = false;
             time = 0;
 
@@ -416,6 +421,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 time += Time.deltaTime;
                 float amount = Mathf.Clamp01(time / .25f);
                 cardRenderer.color = new Color(1, 1, 1, 1 - amount);
+                sealRenderer.color = new Color(1, 1, 1, 1 - amount);
                 yield return null;
             }
 
@@ -549,6 +555,15 @@ public sealed class DeckGenerator : MonoBehaviour
             label.margin = new Vector4(5, 5, 5, 0);
         }
 
+        GameObject seal = new GameObject("Auto Play Seal");
+        seal.transform.SetParent(card.transform, false);
+        seal.transform.localPosition = new Vector3(0, -.1f, -.01f);
+        seal.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+        SpriteRenderer sealRenderer = seal.AddComponent<SpriteRenderer>();
+        sealRenderer.sprite = autoPlaySeal;
+        sealRenderer.sharedMaterial = cardMaterials[0];
+        sealRenderer.enabled = false;
+
         if (card.GetComponent<Collider2D>() == null) card.AddComponent<BoxCollider2D>();
 
         card.SetActive(true);
@@ -559,6 +574,8 @@ public sealed class DeckGenerator : MonoBehaviour
     {
         int cardOrder = sortingOrder * 3 + 10;
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
+        SpriteRenderer sealRenderer =
+            card.transform.Find("Auto Play Seal").GetComponent<SpriteRenderer>();
         int transparentIndex =
             (cardData[card].properties & CardData.Transparent) / CardData.Transparent;
         int wildCardIndex =
@@ -569,6 +586,9 @@ public sealed class DeckGenerator : MonoBehaviour
         cardRenderer.sharedMaterial = cardMaterials[cardMaterialIndex];
         if(!animatingCards.Contains(card)) cardRenderer.color = Color.white;
         cardRenderer.sortingOrder = cardOrder;
+        if(!animatingCards.Contains(card)) sealRenderer.color = Color.white;
+        sealRenderer.sortingOrder = cardOrder + 1;
+        sealRenderer.enabled = (cardData[card].properties & CardData.AutoPlay) != 0;
 
         TMP_Text[] labels = card.GetComponentsInChildren<TMP_Text>(true);
         for(int i = 0; i < labels.Length; i++)
@@ -589,6 +609,7 @@ public sealed class DeckGenerator : MonoBehaviour
         for(int i = 0; i < PropertyNames.Length; i++)
         {
             if((properties & PropertyNames[i].property) == 0) continue;
+            if(PropertyNames[i].name == "") continue;
             if(text.Length > 0) text += "\n";
             text += PropertyNames[i].name;
         }
