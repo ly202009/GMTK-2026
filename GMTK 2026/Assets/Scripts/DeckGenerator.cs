@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,7 +20,7 @@ public struct CardData
     public const int AutoPlay = 1 << 1;
     public const int BonusTime = 1 << 2;
     public const int WildCard = 1 << 3;
-    public const int Bomb = 1 << 4;
+    public const int Flexible = 1 << 4;
 
     public int[] values;
     public Suit suit;
@@ -30,11 +31,11 @@ public sealed class DeckGenerator : MonoBehaviour
 {
     private static (int property, Color color, string name)[] PropertyColors =
     {
-        (CardData.Transparent, new Color(.35f, .85f, 1, .5f), "Transparent"),
+        (CardData.Transparent, new Color(.35f, .85f, 1, 1), "Transparent"),
         (CardData.AutoPlay, new Color(.3f, 1, .35f, 1), "Auto Play"),
         (CardData.BonusTime, new Color(1, .8f, .15f, 1), "Bonus Time"),
         (CardData.WildCard, new Color(.55f, .55f, .55f, 1), "Wild Card"),
-        (CardData.Bomb, new Color(1, .2f, .2f, 1), "Bomb")
+        (CardData.Flexible, new Color(1, .2f, .2f, 1), "Flexible")
     };
 
     private const int HandSize = 5;
@@ -45,19 +46,41 @@ public sealed class DeckGenerator : MonoBehaviour
     private const float DrawPileY = 0f;
 
     [SerializeField] private GameObject cardTemplate;
+    [SerializeField] private Material transparentCardMaterial;
+    [SerializeField] private Material wildCardMaterial;
+    [SerializeField] private Material transparentWildCardMaterial;
+    [SerializeField] private Material wildCardTextMaterial;
 
     private int numberOfPiles = 2;
+    private Material[] cardMaterials;
+    private Material[] textMaterials;
     private Dictionary<GameObject, CardData> cardData = new();
     private List<GameObject> handCards = new();
     private List<GameObject>[] piles;
     private List<GameObject> drawPile = new();
+    private HashSet<GameObject> animatingCards = new();
     private GameObject selectedHandCard;
+    private GameObject draggedCard;
     private bool reshuffledCurrentState;
+    private bool cardsChanged;
+    private float cardMoveDuration = .18f;
 
     private void Start()
     {
         List<CardData> deck = CreateDeck();
         Shuffle(deck);
+        cardMaterials = new Material[]
+        {
+            cardTemplate.GetComponent<SpriteRenderer>().sharedMaterial,
+            transparentCardMaterial,
+            wildCardMaterial,
+            transparentWildCardMaterial
+        };
+        textMaterials = new Material[]
+        {
+            cardTemplate.GetComponentInChildren<TMP_Text>(true).fontSharedMaterial,
+            wildCardTextMaterial
+        };
         cardTemplate.SetActive(false);
 
         piles = new List<GameObject>[numberOfPiles];
@@ -83,13 +106,41 @@ public sealed class DeckGenerator : MonoBehaviour
         }
 
         RenderCards();
+        cardsChanged = true;
     }
 
     private void HandleClicks()
     {
-        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
- 
+        if(draggedCard == null && !Mouse.current.leftButton.wasPressedThisFrame) return;
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+
+        if(draggedCard != null)
+        {
+            if(Mouse.current.leftButton.isPressed)
+            {
+                draggedCard.transform.position = new Vector3(mousePosition.x, mousePosition.y, 0);
+                return;
+            }
+
+            if(Mouse.current.leftButton.wasReleasedThisFrame)
+            {
+                for(int i = 0; i < piles.Length; i++)
+                {
+                    GameObject pileCard = piles[i][piles[i].Count - 1];
+                    if(!pileCard.GetComponent<Collider2D>().OverlapPoint(mousePosition)) continue;
+                    if(!CardsWork(draggedCard, i)) break;
+
+                    PlayCard(draggedCard, i);
+                    break;
+                }
+
+                draggedCard = null;
+                return;
+            }
+        }
+
+        if (!Mouse.current.leftButton.wasPressedThisFrame) return;
+
         Collider2D clickedCollider = Physics2D.OverlapPoint(mousePosition);
         if (clickedCollider == null) return;
 
@@ -97,68 +148,110 @@ public sealed class DeckGenerator : MonoBehaviour
 
         if (handCards.Contains(clickedCard))
         {
-            if (selectedHandCard == clickedCard)
-            {
-                selectedHandCard = null;
-                return;
-            }
-
             selectedHandCard = clickedCard;
+            draggedCard = clickedCard;
             return;
         }
 
-        for (int i = 0; i < numberOfPiles; i++)
+        for (int i = 0; i < piles.Length; i++)
         {
             if (clickedCard == piles[i][piles[i].Count - 1])
             {
                 if (selectedHandCard == null) return;
 
-                if(!CardsWork(selectedHandCard, piles[i][piles[i].Count - 1])) return;
+                if(!CardsWork(selectedHandCard, i)) return;
 
-                handCards[handCards.IndexOf(selectedHandCard)] = null;
-                piles[i].Add(selectedHandCard);
-                selectedHandCard = null;
-                reshuffledCurrentState = false;
+                PlayCard(selectedHandCard, i);
                 return;
             }
         }
 
-        if (drawPile.Count > 0 && clickedCard == drawPile[^1])
+        if (drawPile.Count > 0 && clickedCard == drawPile[drawPile.Count - 1])
         {
-            if (selectedHandCard != null)
-                selectedHandCard = null;
+            selectedHandCard = null;
 
             for (int i = 0; i < handCards.Count && drawPile.Count > 0; i++)
             {
                 if (handCards[i] != null) continue;
 
-                GameObject card = drawPile[^1];
+                GameObject card = drawPile[drawPile.Count - 1];
                 drawPile.RemoveAt(drawPile.Count - 1);
                 handCards[i] = card;
                 reshuffledCurrentState = false;
+                cardsChanged = true;
             }
         }
    }
+
+    private void PlayCard(GameObject card, int pileIndex)
+    {
+        handCards[handCards.IndexOf(card)] = null;
+        piles[pileIndex].Add(card);
+        StartCoroutine(AnimateCardToPile(card, pileIndex));
+        if(selectedHandCard == card) selectedHandCard = null;
+        reshuffledCurrentState = false;
+        cardsChanged = true;
+    }
+
+    private void HandleAutoPlay()
+    {
+        bool playedCard = true;
+
+        while(playedCard)
+        {
+            playedCard = false;
+            for(int i = 0; i < handCards.Count; i++)
+            {
+                if(handCards[i] == null) continue;
+                if((cardData[handCards[i]].properties & CardData.AutoPlay) == 0) continue;
+
+                for(int j = 0; j < piles.Length; j++)
+                {
+                    if(!CardsWork(handCards[i], j)) continue;
+
+                    GameObject card = handCards[i];
+                    PlayCard(card, j);
+                    playedCard = true;
+                    break;
+                }
+
+                if(playedCard) break;
+            }
+        }
+
+        cardsChanged = false;
+    }
 
     private bool IsHandPlayable()
     {
         foreach(GameObject cardObj in handCards)
         {
             if(cardObj == null) continue;
-            foreach(List<GameObject> pile in piles)
-                if(CardsWork(cardObj, pile[pile.Count - 1])) return true;
+            for(int i = 0; i < piles.Length; i++)
+                if(CardsWork(cardObj, i)) return true;
         }
         return false;
     }
 
-    private bool CardsWork(GameObject card1, GameObject card2)
+    private bool CardsWork(GameObject card, int pileIndex)
     {
-        foreach(int value1 in cardData[card1].values)
+        GameObject topCard = piles[pileIndex][GetEffectiveCardIndex(pileIndex)];
+
+        if ((cardData[card].properties & CardData.WildCard) != 0
+        || (cardData[topCard].properties & CardData.WildCard) != 0) return true;
+
+        int differenceLimit = 2;
+        if((cardData[card].properties & CardData.Flexible) != 0
+        || (cardData[topCard].properties & CardData.Flexible) != 0)
+            differenceLimit = 3;
+
+        foreach (int value1 in cardData[card].values)
         {
-            foreach(int value2 in cardData[card2].values)
+            foreach(int value2 in cardData[topCard].values)
             {
                 int difference = Mathf.Abs(value1 - value2);
-                if(difference == 1 || difference == 12) return true;
+                int cyclicDifference = Mathf.Min(difference, 13 - difference);
+                if(cyclicDifference > 0 && cyclicDifference < differenceLimit) return true;
             }
         }
         return false;
@@ -166,6 +259,8 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandleReShuffle()
     {
+        if(handCards.Contains(null) && drawPile.Count > 0) return;
+
         if(IsHandPlayable())
         {
             reshuffledCurrentState = false;
@@ -176,6 +271,7 @@ public sealed class DeckGenerator : MonoBehaviour
         reshuffledCurrentState = true;
 
         foreach(List<GameObject> pile in piles) Shuffle(pile);
+        cardsChanged = true;
 
         bool foundPlayableTop = IsHandPlayable();
         for(int i = 0; i < piles.Length && !foundPlayableTop; i++)
@@ -183,26 +279,34 @@ public sealed class DeckGenerator : MonoBehaviour
             for(int j = 0; j < piles[i].Count && !foundPlayableTop; j++)
             {
                 GameObject pileCard = piles[i][j];
+                piles[i].RemoveAt(j);
+                piles[i].Add(pileCard);
+
                 foreach(GameObject handCard in handCards)
                 {
                     if(handCard == null) continue;
-                    if(CardsWork(handCard, pileCard))
+                    if(CardsWork(handCard, i))
                     {
-                        piles[i].RemoveAt(j);
-                        piles[i].Add(pileCard);
                         foundPlayableTop = true;
                         break;
                     }
                 }
+
+                if(!foundPlayableTop)
+                {
+                    piles[i].RemoveAt(piles[i].Count - 1);
+                    piles[i].Insert(j, pileCard);
+                }
             }
         }
-
     }
 
     private void Update()
     {
         HandleClicks();
+        if(cardsChanged) HandleAutoPlay();
         HandleReShuffle();
+        if(cardsChanged) HandleAutoPlay();
     }
 
     private void LateUpdate()
@@ -217,22 +321,40 @@ public sealed class DeckGenerator : MonoBehaviour
         for(int i = 0; i < handCards.Count; i++)
         {
             if(handCards[i] == null) continue;
-            handCards[i].transform.position = new Vector3(firstCardX + i * HandSpacing, HandY, 0);
-            SetSortingOrder(handCards[i], 0);
-            handCards[i].GetComponent<Collider2D>().enabled = true;
+            if(handCards[i] != draggedCard)
+                handCards[i].transform.position = new Vector3(firstCardX + i * HandSpacing, HandY, 0);
+            SetSortingOrder(handCards[i], handCards[i] == draggedCard ? 1000 : 0);
+            handCards[i].GetComponent<Collider2D>().enabled = handCards[i] != draggedCard;
             handCards[i].GetComponentInChildren<Canvas>(true).enabled = true;
         }
 
         for(int i = 0; i < piles.Length; i++)
         {
-            float x = (i - (numberOfPiles - 1) * .5f) * 2;
+            Vector3 pilePosition = GetPilePosition(i);
+            int effectiveCardIndex = GetEffectiveCardIndex(i);
+
             for(int j = 0; j < piles[i].Count; j++)
             {
                 bool isTopCard = j == piles[i].Count - 1;
-                piles[i][j].transform.position = new Vector3(x, SpeedPileY, 0);
+                bool isEffectiveCard = j == effectiveCardIndex;
+                if(!animatingCards.Contains(piles[i][j]))
+                    piles[i][j].transform.position = pilePosition;
                 SetSortingOrder(piles[i][j], j + 10);
-                piles[i][j].GetComponent<Collider2D>().enabled = isTopCard;
-                piles[i][j].GetComponentInChildren<Canvas>(true).enabled = isTopCard;
+                piles[i][j].GetComponent<Collider2D>().enabled =
+                    isTopCard && !animatingCards.Contains(piles[i][j]);
+                piles[i][j].GetComponentInChildren<Canvas>(true).enabled =
+                    isTopCard || isEffectiveCard;
+
+                TMP_Text[] labels = piles[i][j].GetComponentsInChildren<TMP_Text>(true);
+                for(int k = 0; k < labels.Length; k++)
+                {
+                    if(labels[k].gameObject.name == "Card Text")
+                        labels[k].enabled = isEffectiveCard
+                            || (isTopCard
+                            && (cardData[piles[i][j]].properties & CardData.WildCard) != 0);
+                    else if(labels[k].gameObject.name == "Property Text")
+                        labels[k].enabled = isTopCard;
+                }
             }
         }
 
@@ -246,17 +368,58 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
+    private IEnumerator AnimateCardToPile(GameObject card, int pileIndex)
+    {
+        animatingCards.Add(card);
+        Vector3 startPosition = card.transform.position;
+        Vector3 endPosition = GetPilePosition(pileIndex);
+        float time = 0;
+
+        while(time < cardMoveDuration)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / cardMoveDuration);
+            amount = amount * amount * (3 - 2 * amount);
+            card.transform.position = Vector3.Lerp(startPosition, endPosition, amount);
+            yield return null;
+        }
+
+        card.transform.position = endPosition;
+        animatingCards.Remove(card);
+    }
+
+    private Vector3 GetPilePosition(int pileIndex)
+    {
+        float x = (pileIndex - (numberOfPiles - 1) * .5f) * 2;
+        return new Vector3(x, SpeedPileY, 0);
+    }
+
+    private int GetEffectiveCardIndex(int pileIndex)
+    {
+        int i = piles[pileIndex].Count - 1;
+        if((cardData[piles[pileIndex][i]].properties & CardData.Transparent) != 0
+        && i > 0) i--;
+        return i;
+    }
+
     private static List<CardData> CreateDeck()
     {
         var deck = new List<CardData>();
         foreach (Suit suit in Enum.GetValues(typeof(Suit)))
             for (int i = 1; i <= 13; i++)
+            {
+                int properties = 0;
+                for(int j = 0; j < PropertyColors.Length; j++)
+                    if(UnityEngine.Random.Range(0, 5) == 1)
+                        properties |= PropertyColors[j].property;
+
                 deck.Add(new CardData
                 {
                     values = new[] { i },
                     suit = suit,
-                    properties = UnityEngine.Random.Range(0, CardData.Bomb << 1)
+                    properties = properties
                 });
+            }
 
         return deck;
     }
@@ -300,6 +463,7 @@ public sealed class DeckGenerator : MonoBehaviour
         {
             label.gameObject.name = "Card Text";
             label.text = rank + suit;
+            if((data.properties & CardData.Flexible) != 0) label.text += " +-1";
             label.alignment = TextAlignmentOptions.Center;
             label.rectTransform.anchorMin = Vector2.zero;
             label.rectTransform.anchorMax = Vector2.one;
@@ -309,7 +473,6 @@ public sealed class DeckGenerator : MonoBehaviour
 
             TMP_Text propertyLabel = Instantiate(label, label.transform.parent);
             propertyLabel.gameObject.name = "Property Text";
-            propertyLabel.text = GetPropertyText(data.properties);
             propertyLabel.alignment = TextAlignmentOptions.Top;
             propertyLabel.enableAutoSizing = true;
             propertyLabel.fontSizeMin = 10;
@@ -320,6 +483,7 @@ public sealed class DeckGenerator : MonoBehaviour
             propertyLabel.rectTransform.sizeDelta = new Vector2(-20, 110);
             propertyLabel.rectTransform.anchoredPosition = new Vector2(0, -40);
             propertyLabel.margin = new Vector4(5, 5, 5, 0);
+
         }
 
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
@@ -345,7 +509,13 @@ public sealed class DeckGenerator : MonoBehaviour
         int cardOrder = sortingOrder * 3 + 10;
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
         SpriteRenderer highlightRenderer = card.transform.Find("Highlight").GetComponent<SpriteRenderer>();
+        int transparentIndex =
+            (cardData[card].properties & CardData.Transparent) / CardData.Transparent;
+        int wildCardIndex =
+            (cardData[card].properties & CardData.WildCard) / CardData.WildCard;
+        int cardMaterialIndex = transparentIndex + wildCardIndex * 2;
 
+        cardRenderer.sharedMaterial = cardMaterials[cardMaterialIndex];
         cardRenderer.color = GetCardColor(cardData[card]);
         cardRenderer.sortingOrder = cardOrder;
         highlightRenderer.sortingOrder = cardOrder - 1;
@@ -355,15 +525,20 @@ public sealed class DeckGenerator : MonoBehaviour
         for(int i = 0; i < labels.Length; i++)
         {
             if(labels[i].gameObject.name == "Card Text")
-                labels[i].enabled = (cardData[card].properties & CardData.WildCard) == 0;
+            {
+                labels[i].enabled = true;
+                labels[i].fontSharedMaterial = textMaterials[wildCardIndex];
+                labels[i].color = Color.black;
+            }
             else if(labels[i].gameObject.name == "Property Text")
             {
                 labels[i].enabled = true;
+                labels[i].fontSharedMaterial = textMaterials[wildCardIndex];
                 labels[i].text = GetPropertyText(cardData[card].properties);
             }
         }
 
-        card.GetComponentInChildren<Canvas>(true).sortingOrder = cardOrder + 1;
+        card.GetComponentInChildren<Canvas>(true).sortingOrder = cardOrder + 2;
     }
 
     private string GetPropertyText(int properties)
@@ -391,8 +566,6 @@ public sealed class DeckGenerator : MonoBehaviour
             if((data.properties & PropertyColors[i].property) != 0)
                 color += PropertyColors[i].color;
 
-        color /= propertyCount;
-        if((data.properties & CardData.Transparent) != 0) color.a = .5f;
-        return color;
+        return color / propertyCount;
     }
 }
