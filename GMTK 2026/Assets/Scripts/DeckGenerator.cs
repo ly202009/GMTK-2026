@@ -85,7 +85,7 @@ public sealed class DeckGenerator : MonoBehaviour
         autoDraw = RunData.instance.autoDraw;
         UpdatePowerupUI();
 
-        List<CardData> deck = CreateDeck();
+        List<CardData> deck = new(RunData.instance.deck);
         Shuffle(deck);
         cardSprites = Resources.LoadAll<Sprite>("ClassicCards");
         cardBack = Resources.LoadAll<Sprite>("LightClassic")[0];
@@ -549,28 +549,6 @@ public sealed class DeckGenerator : MonoBehaviour
         while((cardData[piles[pileIndex][i]].properties & CardData.Transparent) != 0
         && i > 0) i--;
         return i;
-    }
-
-    private static List<CardData> CreateDeck()
-    {
-        var deck = new List<CardData>();
-        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
-            for (int i = 1; i <= 13; i++)
-            {
-                int properties = 0;
-                for(int j = 0; j < Properties.Length; j++)
-                    if(UnityEngine.Random.Range(0, 5) == 1)
-                        properties |= Properties[j].property;
-
-                deck.Add(new CardData
-                {
-                    values = new[] { i },
-                    suit = suit,
-                    properties = properties
-                });
-            }
-
-        return deck;
     }
 
     private static void Shuffle<T>(List<T> deck)
