@@ -808,7 +808,6 @@ MonoBehaviour:
   transparentCardMaterial: {fileID: 2100000, guid: b226c79df8e54ad8b221b3cdf117552d, type: 2}
   wildCardMaterial: {fileID: 2100000, guid: d448e9bf10a74cfac443d5efa339774f, type: 2}
   transparentWildCardMaterial: {fileID: 2100000, guid: e559fac021b84dfbd554e6fab44a885a, type: 2}
-  wildCardTextMaterial: {fileID: 2100000, guid: c337d8ae09f64be9b332c4def228663e, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

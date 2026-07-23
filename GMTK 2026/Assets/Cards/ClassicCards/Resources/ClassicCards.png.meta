@@ -1,0 +1,1469 @@
+fileFormatVersion: 2
+guid: 7e6dab28872b1f8418cf85a5f6556d27
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 2512850606047163838
+    second: ClassicCards_0
+  - first:
+      213: -1506259969801474496
+    second: ClassicCards_1
+  - first:
+      213: 5486280399860434595
+    second: ClassicCards_2
+  - first:
+      213: 612082899916301327
+    second: ClassicCards_3
+  - first:
+      213: -982857276144282898
+    second: ClassicCards_4
+  - first:
+      213: 3151310083817888798
+    second: ClassicCards_5
+  - first:
+      213: 3518856401048997504
+    second: ClassicCards_6
+  - first:
+      213: -5138822698931485782
+    second: ClassicCards_7
+  - first:
+      213: -5440438016690967253
+    second: ClassicCards_8
+  - first:
+      213: 6128298282922295289
+    second: ClassicCards_9
+  - first:
+      213: -3838314922497662678
+    second: ClassicCards_10
+  - first:
+      213: -8702091748983839888
+    second: ClassicCards_11
+  - first:
+      213: -5547709685348647895
+    second: ClassicCards_12
+  - first:
+      213: 1440872031000591487
+    second: ClassicCards_13
+  - first:
+      213: 6739822928850129923
+    second: ClassicCards_14
+  - first:
+      213: 9064191229400088911
+    second: ClassicCards_15
+  - first:
+      213: -8867235830130875584
+    second: ClassicCards_16
+  - first:
+      213: 3992010491715342348
+    second: ClassicCards_17
+  - first:
+      213: -2027016408952404254
+    second: ClassicCards_18
+  - first:
+      213: 6981224165023476763
+    second: ClassicCards_19
+  - first:
+      213: -3197990137471231669
+    second: ClassicCards_20
+  - first:
+      213: 1270809900318778572
+    second: ClassicCards_21
+  - first:
+      213: 7474853661152495286
+    second: ClassicCards_22
+  - first:
+      213: -1236631198019154589
+    second: ClassicCards_23
+  - first:
+      213: 5386120621821992177
+    second: ClassicCards_24
+  - first:
+      213: -7304315296617397163
+    second: ClassicCards_25
+  - first:
+      213: 640640646013024752
+    second: ClassicCards_26
+  - first:
+      213: -8596040163142831098
+    second: ClassicCards_27
+  - first:
+      213: -5344206300020033561
+    second: ClassicCards_28
+  - first:
+      213: -5521111777185759186
+    second: ClassicCards_29
+  - first:
+      213: 8177138384373875506
+    second: ClassicCards_30
+  - first:
+      213: 2011970614092556159
+    second: ClassicCards_31
+  - first:
+      213: 5083116562286770330
+    second: ClassicCards_32
+  - first:
+      213: -3290484009506195270
+    second: ClassicCards_33
+  - first:
+      213: -304577730824199722
+    second: ClassicCards_34
+  - first:
+      213: -3060219378993228370
+    second: ClassicCards_35
+  - first:
+      213: -4502483910466448783
+    second: ClassicCards_36
+  - first:
+      213: -5274527714794851024
+    second: ClassicCards_37
+  - first:
+      213: 2058163040347220216
+    second: ClassicCards_38
+  - first:
+      213: 7634439974555855984
+    second: ClassicCards_39
+  - first:
+      213: 6199314779351172965
+    second: ClassicCards_40
+  - first:
+      213: 7926021931383772891
+    second: ClassicCards_41
+  - first:
+      213: 5388358118704156725
+    second: ClassicCards_42
+  - first:
+      213: 6351982519015120024
+    second: ClassicCards_43
+  - first:
+      213: 1110679817811793529
+    second: ClassicCards_44
+  - first:
+      213: -528466647913376271
+    second: ClassicCards_45
+  - first:
+      213: -2526391416382918166
+    second: ClassicCards_46
+  - first:
+      213: -2277261043561760127
+    second: ClassicCards_47
+  - first:
+      213: -1021882695702928357
+    second: ClassicCards_48
+  - first:
+      213: -7001726496828124059
+    second: ClassicCards_49
+  - first:
+      213: -7667188823711267446
+    second: ClassicCards_50
+  - first:
+      213: -1681334245118508210
+    second: ClassicCards_51
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 24
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ClassicCards_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 107
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eb5f01300507fd220800000000000000
+      internalID: 2512850606047163838
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_1
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 71
+        width: 24
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04ea798b980b81be0800000000000000
+      internalID: -1506259969801474496
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_2
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a68ed3c4fe232c40800000000000000
+      internalID: 5486280399860434595
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_3
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f042a9e872e8e7800800000000000000
+      internalID: 612082899916301327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_4
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee21386c3803c52f0800000000000000
+      internalID: -982857276144282898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_5
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1c521b23d3bbbb20800000000000000
+      internalID: 3151310083817888798
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_6
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 08e8228c04d75d030800000000000000
+      internalID: 3518856401048997504
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_7
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aa389726bfb3fa8b0800000000000000
+      internalID: -5138822698931485782
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_8
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2daa90d27eaf74b0800000000000000
+      internalID: -5440438016690967253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_9
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ff3837b1d61c0550800000000000000
+      internalID: 6128298282922295289
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_10
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a21227c0ae09bbac0800000000000000
+      internalID: -3838314922497662678
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_11
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 073e5f2f8a5fb3780800000000000000
+      internalID: -8702091748983839888
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_12
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 92cbcc72f639203b0800000000000000
+      internalID: -5547709685348647895
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_13
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7cf5966a710ff310800000000000000
+      internalID: 1440872031000591487
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_14
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3041523ae39a88d50800000000000000
+      internalID: 6739822928850129923
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_15
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f418a9426e97acd70800000000000000
+      internalID: 9064191229400088911
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_16
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 043ee6d3eff31f480800000000000000
+      internalID: -8867235830130875584
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_17
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0053524468766730800000000000000
+      internalID: 3992010491715342348
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_18
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2e6018ec0579ed3e0800000000000000
+      internalID: -2027016408952404254
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_19
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1ce895d36a42e060800000000000000
+      internalID: 6981224165023476763
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_20
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b4913d4e9e47e93d0800000000000000
+      internalID: -3197990137471231669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_21
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc4ec8d0fd2d2a110800000000000000
+      internalID: 1270809900318778572
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_22
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 107
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6b6c5052dc30cb760800000000000000
+      internalID: 7474853661152495286
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_23
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 71
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36d07e33a7a96dee0800000000000000
+      internalID: -1236631198019154589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_24
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 107
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1fc1b1d2b285fba40800000000000000
+      internalID: 5386120621821992177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_25
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 71
+        width: 24
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5540ba900fbd1aa90800000000000000
+      internalID: -7304315296617397163
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_26
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 35
+        width: 24
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f97846f54304e800800000000000000
+      internalID: 640640646013024752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_27
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60471e0f30bb4b880800000000000000
+      internalID: -8596040163142831098
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_28
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e7b6e85fa095d5b0800000000000000
+      internalID: -5344206300020033561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_29
+      rect:
+        serializedVersion: 2
+        x: 23
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e200e9b37121163b0800000000000000
+      internalID: -5521111777185759186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_30
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23301d749080b7170800000000000000
+      internalID: 8177138384373875506
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_31
+      rect:
+        serializedVersion: 2
+        x: 47
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f77e2871d94fbeb10800000000000000
+      internalID: 2011970614092556159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_32
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98f107f49bda8640800000000000000
+      internalID: 5083116562286770330
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_33
+      rect:
+        serializedVersion: 2
+        x: 71
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab8b7422a3ad552d0800000000000000
+      internalID: -3290484009506195270
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_34
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6d1aab3ea2ce5cbf0800000000000000
+      internalID: -304577730824199722
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_35
+      rect:
+        serializedVersion: 2
+        x: 95
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ea5975440bae785d0800000000000000
+      internalID: -3060219378993228370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_36
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1725cb51db6f381c0800000000000000
+      internalID: -4502483910466448783
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_37
+      rect:
+        serializedVersion: 2
+        x: 119
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03533b13dfc1dc6b0800000000000000
+      internalID: -5274527714794851024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_38
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f8ebbd6160109c10800000000000000
+      internalID: 2058163040347220216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_39
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07ca17635baf2f960800000000000000
+      internalID: 7634439974555855984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_40
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5674e0a42f3680650800000000000000
+      internalID: 6199314779351172965
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_41
+      rect:
+        serializedVersion: 2
+        x: 167
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd6d516e3f2eefd60800000000000000
+      internalID: 7926021931383772891
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_42
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53014f3092b47ca40800000000000000
+      internalID: 5388358118704156725
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_43
+      rect:
+        serializedVersion: 2
+        x: 191
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89c13616276c62850800000000000000
+      internalID: 6351982519015120024
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_44
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9761edfd86de96f00800000000000000
+      internalID: 1110679817811793529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_45
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f55b7732628aa8f0800000000000000
+      internalID: -528466647913376271
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_46
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae176e6646470fcd0800000000000000
+      internalID: -2526391416382918166
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_47
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18a7aa5752b8560e0800000000000000
+      internalID: -2277261043561760127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_48
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 35
+        width: 25
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1422883a1b81d1f0800000000000000
+      internalID: -1021882695702928357
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_49
+      rect:
+        serializedVersion: 2
+        x: 263
+        y: 0
+        width: 25
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5649e1e09ded4de90800000000000000
+      internalID: -7001726496828124059
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_50
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 35
+        width: 24
+        height: 37
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a8548d8236ca89590800000000000000
+      internalID: -7667188823711267446
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClassicCards_51
+      rect:
+        serializedVersion: 2
+        x: 287
+        y: 0
+        width: 24
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e4303038963baa8e0800000000000000
+      internalID: -1681334245118508210
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ClassicCards_0: 2512850606047163838
+      ClassicCards_1: -1506259969801474496
+      ClassicCards_10: -3838314922497662678
+      ClassicCards_11: -8702091748983839888
+      ClassicCards_12: -5547709685348647895
+      ClassicCards_13: 1440872031000591487
+      ClassicCards_14: 6739822928850129923
+      ClassicCards_15: 9064191229400088911
+      ClassicCards_16: -8867235830130875584
+      ClassicCards_17: 3992010491715342348
+      ClassicCards_18: -2027016408952404254
+      ClassicCards_19: 6981224165023476763
+      ClassicCards_2: 5486280399860434595
+      ClassicCards_20: -3197990137471231669
+      ClassicCards_21: 1270809900318778572
+      ClassicCards_22: 7474853661152495286
+      ClassicCards_23: -1236631198019154589
+      ClassicCards_24: 5386120621821992177
+      ClassicCards_25: -7304315296617397163
+      ClassicCards_26: 640640646013024752
+      ClassicCards_27: -8596040163142831098
+      ClassicCards_28: -5344206300020033561
+      ClassicCards_29: -5521111777185759186
+      ClassicCards_3: 612082899916301327
+      ClassicCards_30: 8177138384373875506
+      ClassicCards_31: 2011970614092556159
+      ClassicCards_32: 5083116562286770330
+      ClassicCards_33: -3290484009506195270
+      ClassicCards_34: -304577730824199722
+      ClassicCards_35: -3060219378993228370
+      ClassicCards_36: -4502483910466448783
+      ClassicCards_37: -5274527714794851024
+      ClassicCards_38: 2058163040347220216
+      ClassicCards_39: 7634439974555855984
+      ClassicCards_4: -982857276144282898
+      ClassicCards_40: 6199314779351172965
+      ClassicCards_41: 7926021931383772891
+      ClassicCards_42: 5388358118704156725
+      ClassicCards_43: 6351982519015120024
+      ClassicCards_44: 1110679817811793529
+      ClassicCards_45: -528466647913376271
+      ClassicCards_46: -2526391416382918166
+      ClassicCards_47: -2277261043561760127
+      ClassicCards_48: -1021882695702928357
+      ClassicCards_49: -7001726496828124059
+      ClassicCards_5: 3151310083817888798
+      ClassicCards_50: -7667188823711267446
+      ClassicCards_51: -1681334245118508210
+      ClassicCards_6: 3518856401048997504
+      ClassicCards_7: -5138822698931485782
+      ClassicCards_8: -5440438016690967253
+      ClassicCards_9: 6128298282922295289
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
