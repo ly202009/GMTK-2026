@@ -15,7 +15,7 @@ public enum Suit
 [Serializable]
 public struct CardData
 {
-    public List<int> values;
+    public int[] values;
     public Suit suit;
     public bool isTransparent;
     public bool isAutoPlay;
@@ -26,22 +26,22 @@ public struct CardData
 
 public sealed class DeckGenerator : MonoBehaviour
 {
-    private int handSize = 5;
-    private float handSpacing = 1.5f;
-    private float handY = -2.3f;
-    private float speedPileY = 1.3f;
-    private float drawPileX = 6f;
-    private float drawPileY = 0f;
+    private const int HandSize = 5;
+    private const float HandSpacing = 1.5f;
+    private const float HandY = -2.3f;
+    private const float SpeedPileY = 1.3f;
+    private const float DrawPileX = 6f;
+    private const float DrawPileY = 0f;
 
     [SerializeField] private GameObject cardTemplate;
 
     private int numberOfPiles = 2;
     private Dictionary<GameObject, CardData> cardData = new();
     private List<GameObject> handCards = new();
-    private Stack<GameObject>[] piles;
-    private int[] pileDepth;
+    private List<GameObject>[] piles;
     private List<GameObject> drawPile = new();
     private GameObject selectedHandCard;
+    private bool reshuffledCurrentState;
 
     private void Start()
     {
@@ -49,53 +49,42 @@ public sealed class DeckGenerator : MonoBehaviour
         Shuffle(deck);
         cardTemplate.SetActive(false);
 
-        piles = new Stack<GameObject>[numberOfPiles];
-        pileDepth = new int[numberOfPiles];
+        piles = new List<GameObject>[numberOfPiles];
         int deckIndex = 0;
-        float firstCardX = -(handSize - 1) * handSpacing * .5f;
 
-        for (int i = 0; i < handSize; i++)
+        for (int slot = 0; slot < HandSize; slot++)
         {
-            Vector3 position = new(firstCardX + i * handSpacing, handY, 0);
-            handCards.Add(CreateCard(deck[deckIndex], position, deckIndex, 0));
+            handCards.Add(CreateCard(deck[deckIndex]));
             deckIndex++;
         }
 
         for (int i = 0; i < numberOfPiles; i++)
         {
-            piles[i] = new Stack<GameObject>();
-            float x = (i - (numberOfPiles - 1) * .5f) * 2;
-            GameObject card = CreateCard(deck[deckIndex], new Vector3(x, speedPileY, 0), deckIndex, 10);
-            piles[i].Push(card);
-            pileDepth[i] = 10;
+            piles[i] = new List<GameObject>();
+            piles[i].Add(CreateCard(deck[deckIndex]));
             deckIndex++;
         }
 
         while (deckIndex < deck.Count)
         {
-            GameObject card = CreateCard(deck[deckIndex], new Vector3(drawPileX, drawPileY, 0), deckIndex, drawPile.Count);
-            card.GetComponent<Collider2D>().enabled = false;
-            card.GetComponentInChildren<Canvas>(true).enabled = false;
-            drawPile.Add(card);
+            drawPile.Add(CreateCard(deck[deckIndex]));
             deckIndex++;
         }
 
-        drawPile[drawPile.Count - 1].GetComponent<Collider2D>().enabled = true;
-        drawPile[drawPile.Count - 1].GetComponentInChildren<Canvas>(true).enabled = true;
+        RenderCards();
     }
 
-    private void Update()
+    private void HandleClicks()
     {
         if (!Mouse.current.leftButton.wasPressedThisFrame) return;
-
+ 
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D clickedCollider = Physics2D.OverlapPoint(mousePosition);
         if (clickedCollider == null) return;
 
         GameObject clickedCard = clickedCollider.gameObject;
-        int handSlot = handCards.IndexOf(clickedCard);
 
-        if (handSlot >= 0)
+        if (handCards.Contains(clickedCard))
         {
             if (selectedHandCard == clickedCard)
             {
@@ -114,29 +103,22 @@ public sealed class DeckGenerator : MonoBehaviour
 
         for (int i = 0; i < numberOfPiles; i++)
         {
-            if (clickedCard == piles[i].Peek())
+            if (clickedCard == piles[i][piles[i].Count - 1])
             {
                 if (selectedHandCard == null) return;
 
-                int playedRank = cardData[selectedHandCard].values[0];
-                int pileRank = cardData[piles[i].Peek()].values[0];
-                int difference = Mathf.Abs(playedRank - pileRank);
-                if (difference != 1 && difference != 12) return;
+                if(!CardsWork(selectedHandCard, piles[i][piles[i].Count - 1])) return;
 
-                piles[i].Peek().GetComponent<Collider2D>().enabled = false;
-                piles[i].Peek().GetComponentInChildren<Canvas>(true).enabled = false;
                 selectedHandCard.GetComponent<SpriteRenderer>().color = Color.white;
                 handCards[handCards.IndexOf(selectedHandCard)] = null;
-                selectedHandCard.transform.position = piles[i].Peek().transform.position;
-                pileDepth[i]++;
-                SetSortingOrder(selectedHandCard, pileDepth[i]);
-                piles[i].Push(selectedHandCard);
+                piles[i].Add(selectedHandCard);
                 selectedHandCard = null;
+                reshuffledCurrentState = false;
                 return;
             }
         }
 
-        if (drawPile.Count > 0 && clickedCard == drawPile[drawPile.Count - 1])
+        if (drawPile.Count > 0 && clickedCard == drawPile[^1])
         {
             if (selectedHandCard != null)
             {
@@ -144,42 +126,139 @@ public sealed class DeckGenerator : MonoBehaviour
                 selectedHandCard = null;
             }
 
-            float firstCardX = -(handSize - 1) * handSpacing * .5f;
-            for (int i = 0; i < handCards.Count && drawPile.Count > 0; i++)
+            for (int slot = 0; slot < handCards.Count && drawPile.Count > 0; slot++)
             {
-                if (handCards[i] != null) continue;
+                if (handCards[slot] != null) continue;
 
-                GameObject card = drawPile[drawPile.Count - 1];
+                GameObject card = drawPile[^1];
                 drawPile.RemoveAt(drawPile.Count - 1);
-                card.transform.position = new Vector3(firstCardX + i * handSpacing, handY, 0);
-                SetSortingOrder(card, 0);
-                card.GetComponent<Collider2D>().enabled = true;
-                card.GetComponentInChildren<Canvas>(true).enabled = true;
-                handCards[i] = card;
+                handCards[slot] = card;
+                reshuffledCurrentState = false;
             }
+        }
+   }
 
-            if (drawPile.Count > 0)
+    private bool IsHandPlayable()
+    {
+        foreach(GameObject cardObj in handCards)
+        {
+            if(cardObj == null) continue;
+            foreach(List<GameObject> pile in piles)
+                if(CardsWork(cardObj, pile[pile.Count - 1])) return true;
+        }
+        return false;
+    }
+
+    private bool CardsWork(GameObject card1, GameObject card2)
+    {
+        foreach(int value1 in cardData[card1].values)
+        {
+            foreach(int value2 in cardData[card2].values)
             {
-                drawPile[drawPile.Count - 1].GetComponent<Collider2D>().enabled = true;
-                drawPile[drawPile.Count - 1].GetComponentInChildren<Canvas>(true).enabled = true;
+                int difference = Mathf.Abs(value1 - value2);
+                if(difference == 1 || difference == 12) return true;
             }
+        }
+        return false;
+    }
+
+    private void HandleReShuffle()
+    {
+        if(IsHandPlayable())
+        {
+            reshuffledCurrentState = false;
+            return;
+        }
+
+        if(reshuffledCurrentState) return;
+        reshuffledCurrentState = true;
+
+        foreach(List<GameObject> pile in piles) Shuffle(pile);
+
+        bool foundPlayableTop = IsHandPlayable();
+        for(int pileIndex = 0; pileIndex < piles.Length && !foundPlayableTop; pileIndex++)
+        {
+            for(int cardIndex = 0; cardIndex < piles[pileIndex].Count && !foundPlayableTop; cardIndex++)
+            {
+                GameObject pileCard = piles[pileIndex][cardIndex];
+                foreach(GameObject handCard in handCards)
+                {
+                    if(handCard == null) continue;
+                    if(CardsWork(handCard, pileCard))
+                    {
+                        piles[pileIndex].RemoveAt(cardIndex);
+                        piles[pileIndex].Add(pileCard);
+                        foundPlayableTop = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+    }
+
+    private void Update()
+    {
+        HandleClicks();
+        HandleReShuffle();
+    }
+
+    private void LateUpdate()
+    {
+        RenderCards();
+    }
+
+    private void RenderCards()
+    {
+        float firstCardX = -(HandSize - 1) * HandSpacing * .5f;
+
+        for(int i = 0; i < handCards.Count; i++)
+        {
+            if(handCards[i] == null) continue;
+            handCards[i].transform.position = new Vector3(firstCardX + i * HandSpacing, HandY, 0);
+            SetSortingOrder(handCards[i], 0);
+            handCards[i].GetComponent<Collider2D>().enabled = true;
+            handCards[i].GetComponentInChildren<Canvas>(true).enabled = true;
+        }
+
+        for(int i = 0; i < piles.Length; i++)
+        {
+            float x = (i - (numberOfPiles - 1) * .5f) * 2;
+            for(int j = 0; j < piles[i].Count; j++)
+            {
+                bool isTopCard = j == piles[i].Count - 1;
+                piles[i][j].transform.position = new Vector3(x, SpeedPileY, 0);
+                SetSortingOrder(piles[i][j], j + 10);
+                piles[i][j].GetComponent<Collider2D>().enabled = isTopCard;
+                piles[i][j].GetComponentInChildren<Canvas>(true).enabled = isTopCard;
+            }
+        }
+
+        for(int i = 0; i < drawPile.Count; i++)
+        {
+            bool isTopCard = i == drawPile.Count - 1;
+            drawPile[i].transform.position = new Vector3(DrawPileX, DrawPileY, 0);
+            SetSortingOrder(drawPile[i], i);
+            drawPile[i].GetComponent<Collider2D>().enabled = isTopCard;
+            drawPile[i].GetComponentInChildren<Canvas>(true).enabled = isTopCard;
         }
     }
 
     private static List<CardData> CreateDeck()
     {
         var deck = new List<CardData>();
-        for (int i = 0; i < 52; i++)
-            deck.Add(new CardData
-            {
-                values = new List<int> { i % 13 + 1 },
-                suit = (Suit)(i / 13)
-            });
+        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
+            for (int value = 1; value <= 13; value++)
+                deck.Add(new CardData
+                {
+                    values = new[] { value },
+                    suit = suit
+                });
 
         return deck;
     }
 
-    private static void Shuffle(List<CardData> deck)
+    private static void Shuffle<T>(List<T> deck)
     {
         for (int i = deck.Count - 1; i > 0; i--)
         {
@@ -188,11 +267,11 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
-    private GameObject CreateCard(CardData data, Vector3 position, int deckIndex, int sortingOrder)
+    private GameObject CreateCard(CardData data)
     {
-        GameObject card = Instantiate(cardTemplate, position, cardTemplate.transform.rotation, cardTemplate.transform.parent);
+        GameObject card = Instantiate(cardTemplate, Vector3.zero, cardTemplate.transform.rotation, cardTemplate.transform.parent);
 
-        card.name = $"Card {deckIndex + 1}";
+        card.name = $"Card {cardData.Count + 1}";
         cardData.Add(card, data);
 
         string rank = data.values[0] switch
@@ -217,7 +296,6 @@ public sealed class DeckGenerator : MonoBehaviour
         if (label != null) label.text = rank + suit;
         if (card.GetComponent<Collider2D>() == null) card.AddComponent<BoxCollider2D>();
 
-        SetSortingOrder(card, sortingOrder);
         card.SetActive(true);
         return card;
     }
