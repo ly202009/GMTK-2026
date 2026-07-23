@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -47,6 +48,8 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material transparentCardMaterial;
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
+    [SerializeField] private TMP_Text powerupText;
+    [SerializeField] private RectTransform powerupPanel;
 
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
@@ -66,10 +69,12 @@ public sealed class DeckGenerator : MonoBehaviour
     private bool cardsChanged;
     private int numberOfPiles;
     private int handSize;
-    private bool allowDoubles;
-    private bool allowSuitMatching;
-    private bool handInvalidGain;
     private bool autoDraw;
+    private bool usedDoubles;
+    private bool usedSuitMatching;
+    private float doublesCountdown;
+    private float suitMatchingCountdown;
+    private float powerupDuration = 10;
     private float cardMoveDuration = .18f;
     private float dragThreshold = .15f;
 
@@ -77,10 +82,8 @@ public sealed class DeckGenerator : MonoBehaviour
     {
         numberOfPiles = RunData.instance.numberOfPiles;
         handSize = RunData.instance.handSize;
-        allowDoubles = RunData.instance.allowDoubles;
-        allowSuitMatching = RunData.instance.allowSuitMatching;
-        handInvalidGain = RunData.instance.handInvalidGain;
         autoDraw = RunData.instance.autoDraw;
+        UpdatePowerupUI();
 
         List<CardData> deck = CreateDeck();
         Shuffle(deck);
@@ -282,7 +285,8 @@ public sealed class DeckGenerator : MonoBehaviour
         if ((cardData[card].properties & CardData.WildCard) != 0
         || (cardData[topCard].properties & CardData.WildCard) != 0) return true;
 
-        if(allowSuitMatching && cardData[card].suit == cardData[topCard].suit)
+        if(suitMatchingCountdown > 0
+        && cardData[card].suit == cardData[topCard].suit)
             return true;
 
         int differenceLimit = 2;
@@ -296,7 +300,7 @@ public sealed class DeckGenerator : MonoBehaviour
             {
                 int difference = Mathf.Abs(value1 - value2);
                 int cyclicDifference = Mathf.Min(difference, 13 - difference);
-                if(allowDoubles && cyclicDifference == 0) return true;
+                if(doublesCountdown > 0 && cyclicDifference == 0) return true;
                 if(cyclicDifference > 0 && cyclicDifference < differenceLimit) return true;
             }
         }
@@ -350,10 +354,59 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void Update()
     {
+        HandlePowerups();
         HandleClicks();
         if(cardsChanged) HandleAutoPlay();
         HandleReShuffle();
         if(cardsChanged) HandleAutoPlay();
+    }
+
+    private void HandlePowerups()
+    {
+        if(!usedSuitMatching && RunData.instance.allowSuitMatching
+        && Keyboard.current.digit1Key.wasPressedThisFrame)
+        {
+            usedSuitMatching = true;
+            suitMatchingCountdown = powerupDuration;
+        }
+
+        if(!usedDoubles && RunData.instance.allowDoubles
+        && Keyboard.current.digit2Key.wasPressedThisFrame)
+        {
+            usedDoubles = true;
+            doublesCountdown = powerupDuration;
+        }
+
+        if(suitMatchingCountdown > 0)
+            suitMatchingCountdown = Mathf.Max(0,
+                suitMatchingCountdown - Time.deltaTime);
+
+        if(doublesCountdown > 0)
+            doublesCountdown = Mathf.Max(0, doublesCountdown - Time.deltaTime);
+
+        UpdatePowerupUI();
+    }
+
+    private void UpdatePowerupUI()
+    {
+        List<string> lines = new();
+        AddPowerupLine(lines, RunData.instance.allowSuitMatching, "1",
+            "Suit Matching", usedSuitMatching, suitMatchingCountdown);
+        AddPowerupLine(lines, RunData.instance.allowDoubles, "2",
+            "Doubles", usedDoubles, doublesCountdown);
+
+        powerupText.text = string.Join("\n", lines);
+        powerupPanel.sizeDelta = new Vector2(520, lines.Count * 40 + 20);
+    }
+
+    private void AddPowerupLine(List<string> lines, bool allowed, string key,
+        string name, bool used, float countdown)
+    {
+        if(!allowed) return;
+        string status = !used ? "<color=#6CFF72>READY</color>" :
+            countdown > 0 ? $"<color=#FFE066>{countdown:0.0}s</color>" :
+            "<color=#888888>USED</color>";
+        lines.Add($"[{key}] {name}  -  {status}");
     }
 
     private void LateUpdate()
