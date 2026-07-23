@@ -15,17 +15,28 @@ public enum Suit
 [Serializable]
 public struct CardData
 {
+    public const int Transparent = 1 << 0;
+    public const int AutoPlay = 1 << 1;
+    public const int BonusTime = 1 << 2;
+    public const int WildCard = 1 << 3;
+    public const int Bomb = 1 << 4;
+
     public int[] values;
     public Suit suit;
-    public bool isTransparent;
-    public bool isAutoPlay;
-    public bool isBonusTime;
-    public bool isWildCard;
-    public bool isBomb;
+    public int properties;
 }
 
 public sealed class DeckGenerator : MonoBehaviour
 {
+    private static (int property, Color color, string name)[] PropertyColors =
+    {
+        (CardData.Transparent, new Color(.35f, .85f, 1, .5f), "Transparent"),
+        (CardData.AutoPlay, new Color(.3f, 1, .35f, 1), "Auto Play"),
+        (CardData.BonusTime, new Color(1, .8f, .15f, 1), "Bonus Time"),
+        (CardData.WildCard, new Color(.55f, .55f, .55f, 1), "Wild Card"),
+        (CardData.Bomb, new Color(1, .2f, .2f, 1), "Bomb")
+    };
+
     private const int HandSize = 5;
     private const float HandSpacing = 1.5f;
     private const float HandY = -2.3f;
@@ -52,7 +63,7 @@ public sealed class DeckGenerator : MonoBehaviour
         piles = new List<GameObject>[numberOfPiles];
         int deckIndex = 0;
 
-        for (int slot = 0; slot < HandSize; slot++)
+        for (int i = 0; i < HandSize; i++)
         {
             handCards.Add(CreateCard(deck[deckIndex]));
             deckIndex++;
@@ -88,16 +99,11 @@ public sealed class DeckGenerator : MonoBehaviour
         {
             if (selectedHandCard == clickedCard)
             {
-                clickedCard.GetComponent<SpriteRenderer>().color = Color.white;
                 selectedHandCard = null;
                 return;
             }
 
-            if (selectedHandCard != null)
-                selectedHandCard.GetComponent<SpriteRenderer>().color = Color.white;
-
             selectedHandCard = clickedCard;
-            clickedCard.GetComponent<SpriteRenderer>().color = new Color(1, .85f, .35f);
             return;
         }
 
@@ -109,7 +115,6 @@ public sealed class DeckGenerator : MonoBehaviour
 
                 if(!CardsWork(selectedHandCard, piles[i][piles[i].Count - 1])) return;
 
-                selectedHandCard.GetComponent<SpriteRenderer>().color = Color.white;
                 handCards[handCards.IndexOf(selectedHandCard)] = null;
                 piles[i].Add(selectedHandCard);
                 selectedHandCard = null;
@@ -121,18 +126,15 @@ public sealed class DeckGenerator : MonoBehaviour
         if (drawPile.Count > 0 && clickedCard == drawPile[^1])
         {
             if (selectedHandCard != null)
-            {
-                selectedHandCard.GetComponent<SpriteRenderer>().color = Color.white;
                 selectedHandCard = null;
-            }
 
-            for (int slot = 0; slot < handCards.Count && drawPile.Count > 0; slot++)
+            for (int i = 0; i < handCards.Count && drawPile.Count > 0; i++)
             {
-                if (handCards[slot] != null) continue;
+                if (handCards[i] != null) continue;
 
                 GameObject card = drawPile[^1];
                 drawPile.RemoveAt(drawPile.Count - 1);
-                handCards[slot] = card;
+                handCards[i] = card;
                 reshuffledCurrentState = false;
             }
         }
@@ -176,18 +178,18 @@ public sealed class DeckGenerator : MonoBehaviour
         foreach(List<GameObject> pile in piles) Shuffle(pile);
 
         bool foundPlayableTop = IsHandPlayable();
-        for(int pileIndex = 0; pileIndex < piles.Length && !foundPlayableTop; pileIndex++)
+        for(int i = 0; i < piles.Length && !foundPlayableTop; i++)
         {
-            for(int cardIndex = 0; cardIndex < piles[pileIndex].Count && !foundPlayableTop; cardIndex++)
+            for(int j = 0; j < piles[i].Count && !foundPlayableTop; j++)
             {
-                GameObject pileCard = piles[pileIndex][cardIndex];
+                GameObject pileCard = piles[i][j];
                 foreach(GameObject handCard in handCards)
                 {
                     if(handCard == null) continue;
                     if(CardsWork(handCard, pileCard))
                     {
-                        piles[pileIndex].RemoveAt(cardIndex);
-                        piles[pileIndex].Add(pileCard);
+                        piles[i].RemoveAt(j);
+                        piles[i].Add(pileCard);
                         foundPlayableTop = true;
                         break;
                     }
@@ -248,11 +250,12 @@ public sealed class DeckGenerator : MonoBehaviour
     {
         var deck = new List<CardData>();
         foreach (Suit suit in Enum.GetValues(typeof(Suit)))
-            for (int value = 1; value <= 13; value++)
+            for (int i = 1; i <= 13; i++)
                 deck.Add(new CardData
                 {
-                    values = new[] { value },
-                    suit = suit
+                    values = new[] { i },
+                    suit = suit,
+                    properties = UnityEngine.Random.Range(0, CardData.Bomb << 1)
                 });
 
         return deck;
@@ -293,7 +296,44 @@ public sealed class DeckGenerator : MonoBehaviour
         };
 
         TMP_Text label = card.GetComponentInChildren<TMP_Text>(true);
-        if (label != null) label.text = rank + suit;
+        if (label != null)
+        {
+            label.gameObject.name = "Card Text";
+            label.text = rank + suit;
+            label.alignment = TextAlignmentOptions.Center;
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = Vector2.zero;
+            label.rectTransform.offsetMax = Vector2.zero;
+            label.rectTransform.anchoredPosition = Vector2.zero;
+
+            TMP_Text propertyLabel = Instantiate(label, label.transform.parent);
+            propertyLabel.gameObject.name = "Property Text";
+            propertyLabel.text = GetPropertyText(data.properties);
+            propertyLabel.alignment = TextAlignmentOptions.Top;
+            propertyLabel.enableAutoSizing = true;
+            propertyLabel.fontSizeMin = 10;
+            propertyLabel.fontSizeMax = 18;
+            propertyLabel.rectTransform.anchorMin = new Vector2(0, 1);
+            propertyLabel.rectTransform.anchorMax = new Vector2(1, 1);
+            propertyLabel.rectTransform.pivot = new Vector2(.5f, 1);
+            propertyLabel.rectTransform.sizeDelta = new Vector2(-20, 110);
+            propertyLabel.rectTransform.anchoredPosition = new Vector2(0, -40);
+            propertyLabel.margin = new Vector4(5, 5, 5, 0);
+        }
+
+        SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
+        GameObject highlight = new GameObject("Highlight");
+        highlight.layer = card.layer;
+        highlight.transform.SetParent(card.transform, false);
+        highlight.transform.localScale = new Vector3(1.1f, 1.1f, 1);
+
+        SpriteRenderer highlightRenderer = highlight.AddComponent<SpriteRenderer>();
+        highlightRenderer.sprite = cardRenderer.sprite;
+        highlightRenderer.sharedMaterial = cardRenderer.sharedMaterial;
+        highlightRenderer.color = new Color(1, .85f, .1f);
+        highlightRenderer.enabled = false;
+
         if (card.GetComponent<Collider2D>() == null) card.AddComponent<BoxCollider2D>();
 
         card.SetActive(true);
@@ -302,7 +342,57 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void SetSortingOrder(GameObject card, int sortingOrder)
     {
-        card.GetComponent<SpriteRenderer>().sortingOrder = sortingOrder;
-        card.GetComponentInChildren<Canvas>(true).sortingOrder = sortingOrder + 1;
+        int cardOrder = sortingOrder * 3 + 10;
+        SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
+        SpriteRenderer highlightRenderer = card.transform.Find("Highlight").GetComponent<SpriteRenderer>();
+
+        cardRenderer.color = GetCardColor(cardData[card]);
+        cardRenderer.sortingOrder = cardOrder;
+        highlightRenderer.sortingOrder = cardOrder - 1;
+        highlightRenderer.enabled = card == selectedHandCard;
+
+        TMP_Text[] labels = card.GetComponentsInChildren<TMP_Text>(true);
+        for(int i = 0; i < labels.Length; i++)
+        {
+            if(labels[i].gameObject.name == "Card Text")
+                labels[i].enabled = (cardData[card].properties & CardData.WildCard) == 0;
+            else if(labels[i].gameObject.name == "Property Text")
+            {
+                labels[i].enabled = true;
+                labels[i].text = GetPropertyText(cardData[card].properties);
+            }
+        }
+
+        card.GetComponentInChildren<Canvas>(true).sortingOrder = cardOrder + 1;
+    }
+
+    private string GetPropertyText(int properties)
+    {
+        string text = "";
+        for(int i = 0; i < PropertyColors.Length; i++)
+        {
+            if((properties & PropertyColors[i].property) == 0) continue;
+            if(text.Length > 0) text += "\n";
+            text += PropertyColors[i].name;
+        }
+        return text;
+    }
+
+    private Color GetCardColor(CardData data)
+    {
+        if(data.properties == 0) return Color.white;
+
+        Color color = Color.clear;
+        int propertyCount = 0;
+        for(int i = data.properties; i > 0; i >>= 1)
+            propertyCount += i & 1;
+
+        for(int i = 0; i < PropertyColors.Length; i++)
+            if((data.properties & PropertyColors[i].property) != 0)
+                color += PropertyColors[i].color;
+
+        color /= propertyCount;
+        if((data.properties & CardData.Transparent) != 0) color.a = .5f;
+        return color;
     }
 }
