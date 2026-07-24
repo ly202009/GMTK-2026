@@ -4,6 +4,8 @@ using Unity.VisualScripting;
 using System.Collections;
 using System.Data;
 using UnityEngine.InputSystem;
+using System.Linq;
+using System;
 
 public class Shop : MonoBehaviour
 {
@@ -12,13 +14,13 @@ public class Shop : MonoBehaviour
     [SerializeField] public float shownPowerPos;
     [SerializeField] public float shownPowerSpacing;
     [SerializeField] private GameObject cardTemplate;
-    [SerializeField] public bool SellPowerups;
     [SerializeField] private Material transparentCardMaterial;
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
     [SerializeField] private int numberOfShownCards;
-    [SerializeField] private int numberOfShownPowerups;
+    [SerializeField] private int numberOfShownSeals;
     [SerializeField] private int[] cost;
+    [SerializeField] private float dragThreshold;
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
     private Sprite cardBack;
@@ -27,15 +29,15 @@ public class Shop : MonoBehaviour
     CardData[] shownCards;
     Vector3[] cardPositions;
     GameObject[] cards;
-    int[] shownPowerup;
-    Vector3[] powerupPositions;
-    GameObject[] powerups;
+    int[] shownSeal;
+    Vector3[] sealPositions;
+    GameObject[] seals;
+    bool[] isAvailable;
 
     private int cardSelected = -1;
-    private int powerupSelected = -1;
-    private bool drag;
-
-
+    private int sealSelected = -1;
+    private bool canDrag = false;
+    private bool isDragging = false;
     private static (int property, string seal, Vector3 sealPosition)[] Properties =
     {
         (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f)),
@@ -54,10 +56,28 @@ public class Shop : MonoBehaviour
         }
         thing.transform.position = end;
     }
+    private IEnumerator ShakeCard(GameObject thing, float duration)
+    {
+        int track = 0;
+        for (float t = 0; t < duration; t += Time.deltaTime)
+        {
+            if (track % 2 == 0){
+                thing.transform.localRotation = Quaternion.Euler(0, 0, 15f);
+            }
+            else
+            {
+                thing.transform.localRotation = Quaternion.Euler(0, 0, -15f);
+            }
+            yield return null;
+        }
+        thing.transform.localRotation = Quaternion.identity;
+    }
 
     void ShowCards()
     {
-        
+        cardSelected = -1;
+        sealSelected = -1;
+
         DeckGenerator.Shuffle(RunData.instance.deck);
         for (int i = 0; i < numberOfShownCards; i++)
         {
@@ -66,40 +86,97 @@ public class Shop : MonoBehaviour
             cards[i] = DrawCard(shownCards[i]);
             cards[i].transform.position = shop.position;
             cards[i].name = "Card " + i.ToString();
+            cards[i].AddComponent<BoxCollider2D>();
         }
-        for (int i = 0; i < numberOfShownPowerups; i++)
+        for (int i = 0; i < numberOfShownSeals; i++)
         {
-            powerupPositions[i] = new Vector3(shownPowerSpacing*(i-numberOfShownPowerups/2), shownPowerPos, 0);
-            shownPowerup[i] = UnityEngine.Random.Range(0, 6);
+            sealPositions[i] = new Vector3(shownPowerSpacing*(i-numberOfShownSeals/2), shownPowerPos, 0);
+            shownSeal[i] = UnityEngine.Random.Range(0, 5);
 
-            powerups[i] = new GameObject();
-            powerups[i].name = "Powerup " + i.ToString();
-            powerups[i].transform.position = shop.position;
-            SpriteRenderer powerupRenderer = powerups[i].AddComponent<SpriteRenderer>();
-            powerupRenderer.transform.SetParent(powerups[i].transform, false);
-            powerupRenderer.transform.localPosition = new Vector3(0, 0, -0.1f);
-            powerupRenderer.transform.localScale = new Vector3(4f, 4f, 1);
-            powerupRenderer.sprite = propertySeals[Properties[i].property];
-            powerupRenderer.enabled = true;
+            seals[i] = new GameObject("Seal " + i.ToString());
+            seals[i].transform.position = shop.position;
+            SpriteRenderer sealRenderer = seals[i].AddComponent<SpriteRenderer>();
+            sealRenderer.transform.SetParent(seals[i].transform, false);
+            sealRenderer.transform.localPosition = new Vector3(0, 0, -0.1f);
+            sealRenderer.transform.localScale = new Vector3(4f, 4f, 1);
+            sealRenderer.sprite = propertySeals[Properties[shownSeal[i]].property];
+            sealRenderer.enabled = true;
+            seals[i].AddComponent<BoxCollider2D>();
+            isAvailable[i] = true;
         }
         for (int i = 0; i < numberOfShownCards; i++)
         {
             StartCoroutine(MoveThing(cards[i], shop.position, cardPositions[i], 0.1f));
         }
-        for (int i = 0; i < numberOfShownPowerups; i++)
+        for (int i = 0; i < numberOfShownSeals; i++)
         {
-            StartCoroutine(MoveThing(powerups[i], shop.position, powerupPositions[i], 0.1f));
+            StartCoroutine(MoveThing(seals[i], shop.position, sealPositions[i], 0.1f));
         }
     }
-    private void ChooseCards() //Don't use for powerups
+    private void ChooseCards()
     {
-    }
-    private void ApplySealToCard()
-    {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+        Collider2D clickedCollider = Physics2D.OverlapPoint(mousePos);
+
+        if (Mouse.current.leftButton.wasPressedThisFrame && clickedCollider != null)
+        {
+            if (cards.Contains(clickedCollider.gameObject))
+            {
+                int clickedCard = Array.IndexOf(cards, clickedCollider.gameObject);
+                if (cardSelected != -1 && cardSelected != clickedCard)
+                {
+                    StartCoroutine(MoveThing(cards[cardSelected], cardPositions[cardSelected]+new Vector3(0, 0.2f, 0), cardPositions[cardSelected], 0.1f));
+                    StartCoroutine(MoveThing(cards[clickedCard], cardPositions[clickedCard], cardPositions[clickedCard]+new Vector3(0, 0.2f, 0), 0.1f));
+                } else if (cardSelected == -1)
+                {
+                    StartCoroutine(MoveThing(cards[clickedCard], cardPositions[clickedCard], cardPositions[clickedCard]+new Vector3(0, 0.2f, 0), 0.1f));
+                }
+                cardSelected = clickedCard;
+            }
+            if (seals.Contains(clickedCollider.gameObject))
+            {
+                canDrag = true;
+                int clickedPower = Array.IndexOf(seals, clickedCollider.gameObject);
+                if (sealSelected != -1 && sealSelected != clickedPower)
+                {
+                    StartCoroutine(MoveThing(seals[sealSelected], sealPositions[sealSelected]+new Vector3(0, 0.2f, 0), sealPositions[sealSelected], 0.1f));
+                    StartCoroutine(MoveThing(seals[clickedPower], sealPositions[clickedPower], sealPositions[clickedPower]+new Vector3(0, 0.2f, 0), 0.1f));
+                }
+                sealSelected = clickedPower;
+            }
+        } else if (Mouse.current.leftButton.wasReleasedThisFrame)
+        {
+            if (canDrag)
+            {
+                canDrag = false;
+            }
+        }
+
         
-    }
-    private void ChoosePowerup() //Don't Use for Cards
+    } 
+    private IEnumerator ApplySealToCard()
     {
+        int cardSelect = cardSelected;
+        int sealSelect = sealSelected;
+        CardData thisCard = shownCards[cardSelect];
+        thisCard.properties = shownCards[cardSelect].properties | Properties[shownSeal[sealSelect]].property;
+        RunData.instance.deck[cardSelect] = thisCard;
+        isAvailable[sealSelect] = false;
+        SpriteRenderer[] sealRenderers = cards[cardSelect].GetComponentsInChildren<SpriteRenderer>();
+        foreach (SpriteRenderer sealRenderer in sealRenderers)
+        {
+            if (sealRenderer.name == "Seal " + Properties[shownSeal[sealSelect]].property)
+            {
+                sealRenderer.enabled = true;
+            }
+        }
+
+        seals[sealSelect].SetActive(false);
+
+        yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, new Vector3(0, 0, 0), 0.1f));
+        yield return StartCoroutine(ShakeCard(cards[cardSelect], 0.2f)); 
+        yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, cardPositions[cardSelect], 0.1f));
+
         
     }
     GameObject DrawCard(CardData cardData)
@@ -139,10 +216,11 @@ public class Shop : MonoBehaviour
         shownCards = new CardData[numberOfShownCards];
         cardPositions = new Vector3[numberOfShownCards];
         cards = new GameObject[numberOfShownCards];
+        isAvailable = new bool[numberOfShownSeals];
 
-        shownPowerup = new int[numberOfShownPowerups];
-        powerupPositions = new Vector3[numberOfShownPowerups];
-        powerups = new GameObject[numberOfShownPowerups];
+        shownSeal = new int[numberOfShownSeals];
+        sealPositions = new Vector3[numberOfShownSeals];
+        seals = new GameObject[numberOfShownSeals];
 
         cardSprites = Resources.LoadAll<Sprite>("ClassicCards");
         cardBack = Resources.LoadAll<Sprite>("LightClassic")[0];
@@ -169,6 +247,12 @@ public class Shop : MonoBehaviour
     }
     void Update()
     {
-        
+        ChooseCards();
+        if (cardSelected != -1 && sealSelected != -1)
+        {
+            StartCoroutine(ApplySealToCard());
+            cardSelected = -1;
+            sealSelected = -1;
+        }
     }
 }
