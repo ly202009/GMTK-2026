@@ -930,7 +930,7 @@ public sealed class DeckGenerator : MonoBehaviour
         if(handSize > 0 && Camera.main != null)
         {
             Vector3 comboScreenPosition = Camera.main.WorldToScreenPoint(
-                GetHandPosition(0) + new Vector3(-1.35f, .55f, 0));
+                GetHandPosition(0) + new Vector3(-1.7f, .25f, 0));
             comboScreenPosition.x = Mathf.Max(70, comboScreenPosition.x);
             comboLevelPanel.position = comboScreenPosition;
             comboLevelPosition = comboLevelPanel.anchoredPosition;
@@ -939,6 +939,8 @@ public sealed class DeckGenerator : MonoBehaviour
             comboLevelPosition + Vector2.right * levelShake;
         comboLevelPanel.localScale = Vector3.one
             * (1 + comboLevelPunch + warningPulse * .7f);
+        comboTimerPanel.position = comboLevelPanel.TransformPoint(
+            new Vector3(comboLevelPanel.rect.width * .5f + 18, 0, 0));
         comboLevelText.text = $"{combo}x";
         comboLevelText.color = comboDecayGear > 0 ?
             Color.Lerp(new Color(1, .2f, .08f),
@@ -1177,8 +1179,6 @@ public sealed class DeckGenerator : MonoBehaviour
         Transform drawCount = drawPileCountText.transform.parent;
         drawCount.position = Camera.main.WorldToScreenPoint(
             GetDrawPilePosition() + Vector3.up * .85f);
-        comboTimerPanel.position = Camera.main.WorldToScreenPoint(
-            GetDrawPilePosition() + Vector3.right * 1.1f);
         if(shownDrawPileCount != drawPile.Count)
         {
             shownDrawPileCount = drawPile.Count;
