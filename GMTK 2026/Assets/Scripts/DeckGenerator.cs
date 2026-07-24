@@ -392,6 +392,14 @@ public sealed class DeckGenerator : MonoBehaviour
             comboTypes.Add("CLOSE CALL");
             timeMultiplier += .15f;
         }
+        int cardsInHand = 0;
+        foreach(GameObject handCard in handCards)
+            if(handCard != null) cardsInHand++;
+        if(cardsInHand == 1)
+        {
+            comboTypes.Add("EMPTY HAND");
+            timeMultiplier += .15f;
+        }
 
         bool bonusTime =
             (playedCard.properties & CardData.BonusTime) != 0;
