@@ -12,9 +12,9 @@ public class PowerUpShop : MonoBehaviour
     private Button[] powerButtons = new Button[3];
     private TMP_Text[] powerTexts = new TMP_Text[3];
     private int[] shownPowers = new int[3];
-    private bool[] purchased = new bool[3];
     private Sprite[] powerSprites = new Sprite[8];
     private int rerolls;
+    private int chosenSlot = -1;
 
     private void Start()
     {
@@ -70,6 +70,7 @@ public class PowerUpShop : MonoBehaviour
 
     private void ShowPowerups()
     {
+        chosenSlot = -1;
         List<int> available = new() { 0, 1, 3 };
         if(!RunData.instance.allowDoubles) available.Add(2);
         if(!RunData.instance.allowSuitMatching) available.Add(4);
@@ -86,7 +87,6 @@ public class PowerUpShop : MonoBehaviour
         for(int i = 0; i < powerButtons.Length; i++)
         {
             shownPowers[i] = available[i];
-            purchased[i] = false;
             powerButtons[i].interactable = true;
             powerButtons[i].GetComponent<AnimatedButton>()
                 .PlayEntrance(i * .045f);
@@ -102,30 +102,29 @@ public class PowerUpShop : MonoBehaviour
     private void BuyPowerup(int slot)
     {
         int power = shownPowers[slot];
-        int cost = RunData.PowerupCost(power);
-        if(purchased[slot] || RunData.instance.countdown < cost)
+        if(chosenSlot != -1)
         {
             powerButtons[slot].GetComponent<AnimatedButton>().Reject();
             return;
         }
 
         string progress = GetProgress(power);
-        RunData.instance.countdown -= cost;
         RunData.instance.AddPowerup(power);
 
-        purchased[slot] = true;
+        chosenSlot = slot;
         powerTexts[slot].text =
-            $"PURCHASED!\n{RunData.Powerups[power].name}\n{progress}";
+            $"CHOSEN!\n{RunData.Powerups[power].name}\n{progress}";
         powerTexts[slot].color = new Color(.25f, 1, .35f);
         powerButtons[slot].GetComponent<Image>().color =
             new Color(.55f, 1, .6f);
-        powerButtons[slot].interactable = false;
+        for(int i = 0; i < powerButtons.Length; i++)
+            powerButtons[i].interactable = false;
     }
 
     private void Reroll()
     {
-        int rerollCost = 3 + rerolls * 2;
-        if(RunData.instance.countdown < rerollCost) return;
+        int rerollCost = 10 + rerolls * 3;
+        if(chosenSlot != -1 || RunData.instance.countdown < rerollCost) return;
         RunData.instance.countdown -= rerollCost;
         rerolls++;
         ShowPowerups();
@@ -147,18 +146,18 @@ public class PowerUpShop : MonoBehaviour
 
     private void Update()
     {
-        int rerollCost = 3 + rerolls * 2;
+        int rerollCost = 10 + rerolls * 3;
         rerollText.text = $"REROLL\n-{rerollCost}s";
-        rerollButton.interactable = RunData.instance.countdown >= rerollCost;
+        rerollButton.interactable = chosenSlot == -1
+            && RunData.instance.countdown >= rerollCost;
 
         for(int i = 0; i < powerButtons.Length; i++)
         {
-            if(purchased[i]) continue;
+            if(i == chosenSlot) continue;
             int power = shownPowers[i];
-            int cost = RunData.PowerupCost(power);
             powerTexts[i].text =
-                $"{RunData.Powerups[power].name}\n{GetProgress(power)}\n-{cost}s";
-            powerButtons[i].interactable = true;
+                $"{RunData.Powerups[power].name}\n{GetProgress(power)}\nFREE";
+            powerButtons[i].interactable = chosenSlot == -1;
         }
     }
 }

@@ -215,9 +215,9 @@ public class PowerupHUD : MonoBehaviour
     private Image[] cooldownFills = new Image[8];
     private TMP_Text[] statusTexts = new TMP_Text[8];
     private TMP_Text[] sellTexts = new TMP_Text[8];
+    private Button[] sellButtons = new Button[8];
     private AnimatedButton[] entryAnimations = new AnimatedButton[8];
     private int selectedPower = -1;
-    private float selectedTime;
 
     private void Start()
     {
@@ -251,21 +251,22 @@ public class PowerupHUD : MonoBehaviour
                 .GetComponent<Image>();
             statusTexts[i] = entries[i].transform.Find("Status")
                 .GetComponent<TMP_Text>();
-            sellTexts[i] = entries[i].transform.Find("Sell")
-                .GetComponent<TMP_Text>();
+            sellButtons[i] = entries[i].transform.Find("Sell Button")
+                .GetComponent<Button>();
+            sellTexts[i] = sellButtons[i].GetComponentInChildren<TMP_Text>();
+            sellButtons[i].onClick.AddListener(() => SellPowerup(j));
+            sellButtons[i].gameObject.SetActive(false);
             rect.anchoredPosition = Vector2.zero;
         }
     }
 
     private void ClickPowerup(int power)
     {
-        if(selectedPower != power)
-        {
-            selectedPower = power;
-            selectedTime = 3;
-            return;
-        }
+        selectedPower = selectedPower == power ? -1 : power;
+    }
 
+    private void SellPowerup(int power)
+    {
         int refund = RunData.instance.SellPowerup(power);
         if(refund > 0 && DeckGenerator.instance != null)
             DeckGenerator.instance.RemovePowerup(power);
@@ -275,10 +276,6 @@ public class PowerupHUD : MonoBehaviour
     private void Update()
     {
         if(RunData.instance == null) return;
-        if(selectedTime > 0)
-            selectedTime -= Time.unscaledDeltaTime;
-        else
-            selectedPower = -1;
 
         int j = 0;
         for(int i = 0; i < entries.Length; i++)
@@ -292,7 +289,8 @@ public class PowerupHUD : MonoBehaviour
 
             RectTransform rect =
                 entries[i].GetComponent<RectTransform>();
-            Vector2 position = new Vector2(0,
+            Vector2 position = new Vector2(
+                selectedPower == i ? 12 : 0,
                 -j * (rect.rect.height + 14));
             entryAnimations[i].SetBasePosition(position);
             if(!entries[i].activeSelf)
@@ -334,8 +332,16 @@ public class PowerupHUD : MonoBehaviour
 
             int refund = Mathf.RoundToInt(
                 RunData.PowerupCost(i) * .7f);
-            sellTexts[i].text = selectedPower == i ?
-                $"{RunData.Powerups[i].name}\nSELL +{refund}s" : "";
+            sellTexts[i].text = $"SELL +{refund}s";
+            bool showSell = selectedPower == i;
+            statusTexts[i].enabled = !showSell;
+            if(showSell && !sellButtons[i].gameObject.activeSelf)
+            {
+                sellButtons[i].gameObject.SetActive(true);
+                sellButtons[i].GetComponent<AnimatedButton>().PlayEntrance(0);
+            }
+            else if(!showSell)
+                sellButtons[i].gameObject.SetActive(false);
         }
     }
 }
