@@ -521,8 +521,8 @@ public sealed class DeckGenerator : MonoBehaviour
         if(movingToShop || drawPile.Count > 0 || animatingCards.Count > 0) return;
         foreach(GameObject card in handCards)
             if(card != null) return;
+        RunData.instance.countdown += 50;
         movingToShop = true;
-        RunData.instance.countdown += 90;
         SceneTransition.Load("ShopScene");
     }
 
