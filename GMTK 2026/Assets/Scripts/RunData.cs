@@ -12,13 +12,13 @@ public class RunData : MonoBehaviour
     public static (string name, float secondsSaved, string sprite)[] Powerups =
     {
         ("EXTRA PILE", 14, "Extra Playable Stacks"),
-        ("BIGGER HAND", 10, null),
+        ("BIGGER HAND", 10, "Extra Hand Powerup"),
         ("ALLOW DOUBLES", 6, "Doubles Powerup"),
         ("SLOW TIMER", 9, "Time Slow Powerup"),
         ("SUIT MATCHING", 7, "Matching suits Powerup"),
         ("ALLOW FREEZE", 8, "Freeze Powerup"),
-        ("INVALID HAND GAIN", 6, null),
-        ("AUTO DRAW", 5, null)
+        ("INVALID HAND GAIN", 6, "invalid hand"),
+        ("AUTO DRAW", 5, "Autodraw Powerup")
     };
     public static string[] Bosses =
     {
