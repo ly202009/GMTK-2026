@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public enum Suit
 {
@@ -64,7 +65,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private const float HandY = -2.3f;
     private const float SpeedPileY = 1.3f;
     private const float DrawPileX = 6f;
-    private const float DrawPileY = 0f;
+    private const float DrawPileY = -1.7f;
 
     [SerializeField] private GameObject cardTemplate;
     [SerializeField] private Material transparentCardMaterial;
@@ -76,6 +77,12 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private TMP_Text comboText;
     [SerializeField] private RectTransform comboPanel;
     [SerializeField] private CanvasGroup comboGroup;
+    [SerializeField] private Image comboTimerFill;
+    [SerializeField] private RectTransform comboTimerPanel;
+    [SerializeField] private CanvasGroup comboTimerGroup;
+    [SerializeField] private TMP_Text comboLevelText;
+    [SerializeField] private RectTransform comboLevelPanel;
+    [SerializeField] private CanvasGroup comboLevelGroup;
 
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
@@ -109,9 +116,16 @@ public sealed class DeckGenerator : MonoBehaviour
     private float dragThreshold = .15f;
     private int combo;
     private float comboTime;
-    private float comboWindow = 3.5f;
+    private float comboWindow = 1.8f;
+    private float comboStepWindow = 1.8f;
+    private int comboDecayGear;
+    private List<CardData> comboHistory = new();
+    private float comboFractionalTime;
     private Coroutine comboAnimation;
     private Vector2 comboPosition;
+    private float comboBarPunch;
+    private Vector2 comboLevelPosition;
+    private float comboLevelPunch;
 
     private void Start()
     {
@@ -121,6 +135,9 @@ public sealed class DeckGenerator : MonoBehaviour
         UpdatePowerupUI();
         comboPosition = comboPanel.anchoredPosition;
         comboGroup.alpha = 0;
+        comboTimerGroup.alpha = 0;
+        comboLevelPosition = comboLevelPanel.anchoredPosition;
+        comboLevelGroup.alpha = 0;
 
         List<CardData> deck = new(RunData.instance.deck);
         Shuffle(deck);
@@ -249,17 +266,72 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void PlayCard(GameObject card, int pileIndex)
     {
-        if(comboTime <= 0) combo = 0;
+        CardData playedCard = cardData[card];
+        bool closeCall = RunData.instance.countdownValue <= 10;
         combo++;
+        comboDecayGear = 0;
+        comboStepWindow = comboWindow;
         comboTime = comboWindow;
+        comboBarPunch = .16f;
+        comboLevelPunch = .18f;
+
+        List<string> comboTypes = new();
+        float timeMultiplier = 1;
+        if(comboHistory.Count > 0)
+        {
+            CardData previousCard =
+                comboHistory[comboHistory.Count - 1];
+            if(CanRepresentValue(previousCard, 13)
+            && CanRepresentValue(playedCard, 1))
+            {
+                comboTypes.Add("OVER THE TOP");
+                timeMultiplier += .18f;
+            }
+            if(CanRepresentValue(previousCard, 1)
+            && CanRepresentValue(playedCard, 13))
+            {
+                comboTypes.Add("NEGATIVE");
+                timeMultiplier += .18f;
+            }
+            if(previousCard.suit == playedCard.suit)
+            {
+                comboTypes.Add("MATCHER");
+                timeMultiplier += .1f;
+            }
+        }
+
+        comboHistory.Add(playedCard);
+        if(comboHistory.Count >= 4)
+        {
+            int i = comboHistory.Count;
+            if(comboHistory[i - 4].values[0] == comboHistory[i - 2].values[0]
+            && comboHistory[i - 3].values[0] == comboHistory[i - 1].values[0]
+            && comboHistory[i - 4].values[0] != comboHistory[i - 3].values[0])
+            {
+                comboTypes.Add("REPEAT");
+                timeMultiplier += .22f;
+            }
+        }
+        if(comboHistory.Count > 4) comboHistory.RemoveAt(0);
+        if(closeCall)
+        {
+            comboTypes.Add("CLOSE CALL");
+            timeMultiplier += .15f;
+        }
+
         bool bonusTime =
-            (cardData[card].properties & CardData.BonusTime) != 0;
+            (playedCard.properties & CardData.BonusTime) != 0;
         int timeGain = combo <= 1 ? 0 :
             Mathf.CeilToInt((combo - 1) / 4f);
         if(bonusTime) timeGain++;
+        comboFractionalTime += timeGain * (timeMultiplier - 1);
+        int multiplierGain = Mathf.FloorToInt(comboFractionalTime);
+        comboFractionalTime -= multiplierGain;
+        timeGain += multiplierGain;
         RunData.instance.countdown += timeGain;
         if(comboAnimation != null) StopCoroutine(comboAnimation);
-        comboAnimation = StartCoroutine(ShowCombo(timeGain, bonusTime));
+        comboAnimation = StartCoroutine(ShowCombo(timeGain, bonusTime,
+            string.Join("  •  ", comboTypes), timeMultiplier));
 
         handCards[handCards.IndexOf(card)] = null;
         piles[pileIndex].Add(card);
@@ -357,6 +429,16 @@ public sealed class DeckGenerator : MonoBehaviour
         return false;
     }
 
+    private bool CanRepresentValue(CardData card, int value)
+    {
+        if(card.values[0] == value) return true;
+        if((card.properties & CardData.Flexible) == 0) return false;
+
+        int lowerValue = card.values[0] == 1 ? 13 : card.values[0] - 1;
+        int upperValue = card.values[0] == 13 ? 1 : card.values[0] + 1;
+        return lowerValue == value || upperValue == value;
+    }
+
     private void HandleReShuffle()
     {
         if(animatingCards.Count > 0) return;
@@ -398,7 +480,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
         if(RunData.instance.handInvalidGain)
             RunData.instance.countdown += 3;
-        foreach(List<GameObject> pile in piles) Shuffle(pile);
+        yield return StartCoroutine(AnimateShuffle());
         cardsChanged = true;
 
         bool foundPlayableTop = IsHandPlayable();
@@ -443,12 +525,122 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
-    private IEnumerator ShowCombo(int timeGain, bool bonusTime)
+    private IEnumerator AnimateShuffle()
     {
+        List<GameObject> cards = new();
+        List<Vector3> starts = new();
+        List<Vector3> centers = new();
+        List<Vector3> scales = new();
+        List<int> depths = new();
+        for(int i = 0; i < piles.Count; i++)
+            for(int j = 0; j < piles[i].Count; j++)
+            {
+                cards.Add(piles[i][j]);
+                starts.Add(piles[i][j].transform.position);
+                centers.Add(GetPilePosition(i));
+                scales.Add(piles[i][j].transform.localScale);
+                depths.Add(j);
+                animatingCards.Add(piles[i][j]);
+            }
+
+        if(cards.Count == 0) yield break;
+
+        float time = 0;
+        while(time < .14f)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / .14f);
+            amount = amount * amount * (3 - 2 * amount);
+            for(int i = 0; i < cards.Count; i++)
+            {
+                float direction = depths[i] % 2 == 0 ? -1 : 1;
+                Vector3 target = centers[i] + new Vector3(
+                    direction * (.16f + depths[i] % 4 * .015f),
+                    .05f + depths[i] % 5 * .012f, 0);
+                cards[i].transform.position =
+                    Vector3.Lerp(starts[i], target, amount);
+                cards[i].transform.localRotation =
+                    Quaternion.Euler(0, 0, direction * amount * 12);
+                cards[i].transform.localScale = scales[i]
+                    * (1 + Mathf.Sin(amount * Mathf.PI) * .05f);
+            }
+            yield return null;
+        }
+
+        foreach(List<GameObject> pile in piles) Shuffle(pile);
+
+        starts.Clear();
+        for(int i = 0; i < cards.Count; i++)
+            starts.Add(cards[i].transform.position);
+
+        time = 0;
+        while(time < .13f)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / .13f);
+            amount = 1 - Mathf.Pow(1 - amount, 3);
+            for(int i = 0; i < cards.Count; i++)
+            {
+                float direction = depths[i] % 2 == 0 ? -1 : 1;
+                Vector3 target = centers[i] + new Vector3(
+                    direction * -.18f,
+                    .035f + depths[i] % 5 * .01f, 0);
+                cards[i].transform.position =
+                    Vector3.Lerp(starts[i], target, amount);
+                cards[i].transform.localRotation = Quaternion.Lerp(
+                    Quaternion.Euler(0, 0, direction * 12),
+                    Quaternion.Euler(0, 0, direction * -10), amount);
+            }
+            yield return null;
+        }
+
+        starts.Clear();
+        for(int i = 0; i < cards.Count; i++)
+            starts.Add(cards[i].transform.position);
+
+        time = 0;
+        while(time < .18f)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / .18f);
+            amount = 1 - Mathf.Pow(1 - amount, 3);
+            for(int i = 0; i < cards.Count; i++)
+            {
+                Vector3 position =
+                    Vector3.Lerp(starts[i], centers[i], amount);
+                position.y += Mathf.Sin(amount * Mathf.PI)
+                    * (.08f + depths[i] % 3 * .018f);
+                cards[i].transform.position = position;
+                cards[i].transform.localRotation = Quaternion.Lerp(
+                    cards[i].transform.localRotation,
+                    Quaternion.identity, amount);
+                cards[i].transform.localScale = Vector3.Lerp(
+                    cards[i].transform.localScale, scales[i], amount);
+            }
+            yield return null;
+        }
+
+        for(int i = 0; i < cards.Count; i++)
+        {
+            cards[i].transform.position = centers[i];
+            cards[i].transform.localRotation = Quaternion.identity;
+            cards[i].transform.localScale = scales[i];
+            animatingCards.Remove(cards[i]);
+        }
+    }
+
+    private IEnumerator ShowCombo(int timeGain, bool bonusTime,
+        string comboType, float timeMultiplier)
+    {
+        string typeText = comboType.Length > 0 ?
+            $"\n<size=20><color=#62D9FF>{comboType}  "
+            + $"TIME x{timeMultiplier:0.00}</color></size>" : "";
         comboText.text = timeGain > 0 ?
-            $"{combo}x COMBO\n<color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
-            + $"+{timeGain} SECOND{(timeGain == 1 ? "" : "S")}</color>" :
-            "1x COMBO";
+            $"<size=42>{combo}x COMBO</size>\n"
+            + $"<size=30><color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
+            + $"+{timeGain} SECOND{(timeGain == 1 ? "" : "S")}</color></size>"
+            + typeText :
+            "<size=42>1x COMBO</size>" + typeText;
         Color comboColor = bonusTime ?
             new Color(1, .78f, .12f) : new Color(.55f, 1, .65f);
         comboGroup.alpha = 1;
@@ -505,13 +697,96 @@ public sealed class DeckGenerator : MonoBehaviour
         comboAnimation = null;
     }
 
+    private IEnumerator ShowComboDecay()
+    {
+        comboLevelText.text = $"{combo}x";
+        comboLevelGroup.alpha = 1;
+        comboLevelPunch = .18f;
+        float direction = comboDecayGear % 2 == 0 ? -1 : 1;
+
+        float time = 0;
+        while(time < .22f)
+        {
+            time += Time.unscaledDeltaTime;
+            float strength = 1 - Mathf.Clamp01(time / .22f);
+            comboLevelPanel.localRotation = Quaternion.Euler(0, 0,
+                Mathf.Sin(time * 38) * direction
+                    * (3 + comboDecayGear) * strength);
+            yield return null;
+        }
+
+        comboLevelPanel.localRotation = Quaternion.identity;
+        comboAnimation = null;
+    }
+
     private void Update()
     {
-        if(comboTime > 0)
+        if(combo > 0)
         {
             comboTime -= Time.unscaledDeltaTime;
-            if(comboTime <= 0) combo = 0;
+            if(comboTime <= 0)
+            {
+                combo--;
+                comboDecayGear++;
+                comboBarPunch = .1f;
+                comboLevelPunch = .14f;
+                if(combo > 0)
+                {
+                    comboStepWindow = Mathf.Max(.18f,
+                        comboWindow * Mathf.Pow(.62f, comboDecayGear));
+                    comboTime = comboStepWindow;
+                }
+                else
+                {
+                    comboTime = 0;
+                    comboStepWindow = comboWindow;
+                    comboHistory.Clear();
+                }
+
+                if(comboAnimation != null) StopCoroutine(comboAnimation);
+                comboAnimation = StartCoroutine(ShowComboDecay());
+            }
         }
+        float comboAmount = combo > 0 ?
+            Mathf.Clamp01(comboTime / comboStepWindow) : 0;
+        comboTimerFill.rectTransform.sizeDelta = new Vector2(
+            -6, (comboTimerPanel.rect.height - 6) * comboAmount);
+        comboTimerGroup.alpha = Mathf.Lerp(comboTimerGroup.alpha,
+            combo > 0 ? 1 : 0,
+            1 - Mathf.Exp(-12 * Time.unscaledDeltaTime));
+        comboLevelGroup.alpha = Mathf.Lerp(comboLevelGroup.alpha,
+            combo > 0 ? 1 : 0,
+            1 - Mathf.Exp(-12 * Time.unscaledDeltaTime));
+        comboBarPunch = Mathf.MoveTowards(comboBarPunch, 0,
+            Time.unscaledDeltaTime * 1.5f);
+        comboLevelPunch = Mathf.MoveTowards(comboLevelPunch, 0,
+            Time.unscaledDeltaTime * 1.5f);
+        float warningPulse = comboAmount < .25f && combo > 0 ?
+            Mathf.Sin(Time.unscaledTime * (12 + comboDecayGear * 3))
+                * (.035f + comboDecayGear * .008f) : 0;
+        comboTimerPanel.localScale =
+            Vector3.one * (1 + comboBarPunch + warningPulse);
+        float levelShake = comboDecayGear > 0 && combo > 0 ?
+            Mathf.Sin(Time.unscaledTime * (18 + comboDecayGear * 3))
+                * Mathf.Min(8, comboDecayGear * 1.3f) : 0;
+        comboLevelPanel.anchoredPosition =
+            comboLevelPosition + Vector2.right * levelShake;
+        comboLevelPanel.localScale = Vector3.one
+            * (1 + comboLevelPunch + warningPulse * .7f);
+        comboLevelText.text = $"{combo}x";
+        comboLevelText.color = comboDecayGear > 0 ?
+            Color.Lerp(new Color(1, .2f, .08f),
+                new Color(1, .72f, .12f), comboAmount) :
+            new Color(.45f, 1, .55f);
+        comboTimerFill.color = comboDecayGear > 0 ?
+            Color.Lerp(new Color(1, .08f, .03f),
+                new Color(1, .55f, .08f), comboAmount) :
+            comboAmount > .5f ?
+                Color.Lerp(new Color(1, .82f, .12f),
+                    new Color(.25f, 1, .4f), (comboAmount - .5f) * 2) :
+                Color.Lerp(new Color(1, .15f, .08f),
+                    new Color(1, .82f, .12f), comboAmount * 2);
+
         HandlePowerups();
         HandleClicks();
         if(cardsChanged) HandleAutoPlay();
