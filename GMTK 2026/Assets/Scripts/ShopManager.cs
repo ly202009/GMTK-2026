@@ -33,6 +33,7 @@ public class Shop : MonoBehaviour
     CardData[] shownCards;
     Vector3[] cardPositions;
     GameObject[] cards;
+    float[] cardPops;
     int[] shownSeal;
     Vector3[] sealPositions;
     GameObject[] seals;
@@ -76,12 +77,16 @@ public class Shop : MonoBehaviour
     private IEnumerator ShakeCard(GameObject thing, float duration)
     {
         movingThings.Add(thing);
+        Vector3 position = thing.transform.position;
         for (float t = 0; t < duration; t += Time.deltaTime)
         {
+            float shake = (1 - t / duration) * Mathf.Sin(t * 65);
+            thing.transform.position = position + Vector3.right * shake * .13f;
             thing.transform.localRotation =
-                Quaternion.Euler(0, 0, Mathf.Sin(t * 35) * 5);
+                Quaternion.Euler(0, 0, shake * 5);
             yield return null;
         }
+        thing.transform.position = position;
         thing.transform.localRotation = Quaternion.identity;
         movingThings.Remove(thing);
     }
@@ -161,9 +166,7 @@ public class Shop : MonoBehaviour
             if(cards.Contains(hoveredCollider.gameObject))
             {
                 cardSelected = Array.IndexOf(cards, hoveredCollider.gameObject);
-                if(!movingThings.Contains(cards[cardSelected]))
-                    StartCoroutine(JumpThing(cards[cardSelected],
-                        cardPositions[cardSelected] + new Vector3(0, .28f, 0)));
+                cardPops[cardSelected] = .16f;
             }
             if(seals.Contains(hoveredCollider.gameObject))
             {
@@ -180,6 +183,9 @@ public class Shop : MonoBehaviour
             || movingThings.Contains(cards[i])) continue;
             float lift = i == cardSelected ? .28f :
                 hoveredCollider != null && hoveredCollider.gameObject == cards[i] ? .08f : 0;
+            cardPops[i] = Mathf.Max(0, cardPops[i] - Time.deltaTime);
+            float clickAmount = 1 - cardPops[i] / .16f;
+            lift += Mathf.Sin(clickAmount * Mathf.PI) * .18f;
             float idle = Time.time * 1.8f + i * 1.35f;
             cards[i].transform.position = Vector3.Lerp(cards[i].transform.position,
                 cardPositions[i] + new Vector3(Mathf.Cos(idle) * .012f,
@@ -238,7 +244,8 @@ public class Shop : MonoBehaviour
         if((shownCards[cardSelect].properties & property) != 0
         || RunData.instance.countdown < modifierCost || !isAvailable[sealSelect])
         {
-            yield return StartCoroutine(ShakeCard(seals[sealSelect], 0.2f));
+            StartCoroutine(ShakeCard(seals[sealSelect], .2f));
+            yield return StartCoroutine(ShakeCard(cards[cardSelect], .2f));
             applyingCard = null;
             yield break;
         }
@@ -262,7 +269,20 @@ public class Shop : MonoBehaviour
         seals[sealSelect].SetActive(false);
 
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, new Vector3(0, 0, 0), 0.1f));
-        yield return StartCoroutine(ShakeCard(cards[cardSelect], 0.2f)); 
+        Vector3 normalScale = cards[cardSelect].transform.localScale;
+        Vector3 middlePosition = cards[cardSelect].transform.position;
+        for(float t = 0; t < .22f; t += Time.deltaTime)
+        {
+            float amount = t / .22f;
+            float pop = Mathf.Sin(amount * Mathf.PI);
+            cards[cardSelect].transform.localScale =
+                normalScale * (1 + pop * .16f);
+            cards[cardSelect].transform.position =
+                middlePosition + Vector3.up * pop * .18f;
+            yield return null;
+        }
+        cards[cardSelect].transform.localScale = normalScale;
+        cards[cardSelect].transform.position = middlePosition;
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, cardPositions[cardSelect], 0.1f));
         applyingCard = null;
 
@@ -349,6 +369,7 @@ public class Shop : MonoBehaviour
         shownCards = new CardData[numberOfShownCards];
         cardPositions = new Vector3[numberOfShownCards];
         cards = new GameObject[numberOfShownCards];
+        cardPops = new float[numberOfShownCards];
         isAvailable = new bool[numberOfShownSeals];
 
         shownSeal = new int[numberOfShownSeals];

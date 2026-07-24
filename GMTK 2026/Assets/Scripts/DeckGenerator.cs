@@ -97,6 +97,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private List<GameObject> drawPile = new();
     private HashSet<GameObject> animatingCards = new();
     private HashSet<GameObject> jumpingCards = new();
+    private Dictionary<GameObject, float> cardClickPops = new();
     private GameObject selectedHandCard;
     private GameObject pressedCard;
     private GameObject draggedCard;
@@ -266,7 +267,6 @@ public sealed class DeckGenerator : MonoBehaviour
             else if(Mouse.current.leftButton.wasReleasedThisFrame)
             {
                 selectedHandCard = pressedCard;
-                StartCoroutine(AnimateSelectionJump(pressedCard));
                 pressedCard = null;
                 return;
             }
@@ -312,6 +312,7 @@ public sealed class DeckGenerator : MonoBehaviour
         {
             pressedCard = clickedCard;
             pressedPosition = mousePosition;
+            cardClickPops[clickedCard] = .16f;
             return;
         }
 
@@ -406,6 +407,7 @@ public sealed class DeckGenerator : MonoBehaviour
             string.Join("  •  ", comboTypes), timeMultiplier));
 
         handCards[handCards.IndexOf(card)] = null;
+        cardClickPops.Remove(card);
         piles[pileIndex].Add(card);
         StartCoroutine(AnimateCardToPile(card, pileIndex));
         if(selectedHandCard == card) selectedHandCard = null;
@@ -1082,13 +1084,22 @@ public sealed class DeckGenerator : MonoBehaviour
                 handPosition.x += Mathf.Cos(idle) * .012f;
                 handPosition.y += Mathf.Sin(idle) * .05f;
                 handPosition.y -= Mathf.Abs(fan) * .018f;
-                if(handCards[i] == selectedHandCard)
+                if(handCards[i] == selectedHandCard
+                || handCards[i] == pressedCard)
                     handPosition.y += .35f
                         + Mathf.Sin(Time.time * 5) * .008f;
                 else if(hoveredCollider != null
                 && hoveredCollider.gameObject == handCards[i])
                     handPosition.y += .08f
                         + Mathf.Sin(Time.time * 7) * .008f;
+                if(cardClickPops.TryGetValue(handCards[i], out float popTime))
+                {
+                    popTime = Mathf.Max(0, popTime - Time.deltaTime);
+                    float clickAmount = 1 - popTime / .16f;
+                    handPosition.y += Mathf.Sin(clickAmount * Mathf.PI) * .18f;
+                    if(popTime == 0) cardClickPops.Remove(handCards[i]);
+                    else cardClickPops[handCards[i]] = popTime;
+                }
                 float amount = 1 - Mathf.Exp(-18 * Time.deltaTime);
                 handCards[i].transform.position =
                     Vector3.Lerp(handCards[i].transform.position, handPosition, amount);
@@ -1115,6 +1126,7 @@ public sealed class DeckGenerator : MonoBehaviour
                     1 - Mathf.Exp(-15 * Time.deltaTime));
             }
             int sortingOrder = handCards[i] == draggedCard ? 1000 :
+                handCards[i] == pressedCard ? 101 :
                 handCards[i] == selectedHandCard ? 100 : i;
             SetSortingOrder(handCards[i], sortingOrder);
             handCards[i].GetComponent<Collider2D>().enabled =
@@ -1351,48 +1363,6 @@ public sealed class DeckGenerator : MonoBehaviour
         card.transform.localScale = normalScale;
         animatingCards.Remove(card);
         cardsChanged = true;
-    }
-
-    private IEnumerator AnimateSelectionJump(GameObject card)
-    {
-        int handIndex = handCards.IndexOf(card);
-        if(handIndex < 0) yield break;
-
-        jumpingCards.Add(card);
-        Vector3 heldPosition = GetHandPosition(handIndex) + new Vector3(0, .35f, 0);
-        Vector3 startPosition = card.transform.position;
-        float time = 0;
-
-        while(time < .06f)
-        {
-            if(!handCards.Contains(card))
-            {
-                jumpingCards.Remove(card);
-                yield break;
-            }
-            time += Time.deltaTime;
-            card.transform.position = Vector3.Lerp(startPosition,
-                heldPosition + new Vector3(0, .18f, 0), time / .06f);
-            yield return null;
-        }
-
-        startPosition = card.transform.position;
-        time = 0;
-        while(time < .08f)
-        {
-            if(!handCards.Contains(card))
-            {
-                jumpingCards.Remove(card);
-                yield break;
-            }
-            time += Time.deltaTime;
-            card.transform.position =
-                Vector3.Lerp(startPosition, heldPosition, time / .08f);
-            yield return null;
-        }
-
-        card.transform.position = heldPosition;
-        jumpingCards.Remove(card);
     }
 
     private Vector3 GetPilePosition(int pileIndex)

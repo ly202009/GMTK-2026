@@ -16,9 +16,12 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     private float punch;
     private float appearTime;
     private float appearDelay;
+    private float shake;
     private bool hovered;
+    private bool pressed;
     private bool entrancePlayed;
     public float idleFloat = 4;
+    public bool holdUpOnPress;
 
     private void Awake()
     {
@@ -49,6 +52,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         if(!button.interactable)
         {
             hovered = false;
+            pressed = false;
             targetScale = 1;
             targetLift = 0;
         }
@@ -65,12 +69,15 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         float phase = rect.GetSiblingIndex() * .8f;
         float breathe = Mathf.Sin(Time.unscaledTime * 2.2f + phase) * .008f;
         if(hovered) breathe += Mathf.Sin(Time.unscaledTime * 5) * .004f;
+        shake = Mathf.Max(0, shake - Time.unscaledDeltaTime);
+        float shakeOffset = Mathf.Sin((.22f - shake) * 65) * 10
+            * (shake / .22f);
         Vector3 scale = normalScale
             * ((targetScale + punch + breathe) * appear);
         rect.localScale = Vector3.Lerp(rect.localScale, scale,
             1 - Mathf.Exp(-22 * Time.unscaledDeltaTime));
         rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition,
-            normalPosition + Vector2.up * (targetLift
+            normalPosition + new Vector2(shakeOffset, targetLift
                 + Mathf.Sin(Time.unscaledTime * 1.8f + phase) * idleFloat),
             1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
     }
@@ -86,6 +93,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
+        if(pressed && holdUpOnPress) return;
         targetScale = 1;
         targetLift = 0;
     }
@@ -93,13 +101,16 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     public void OnPointerDown(PointerEventData eventData)
     {
         if(!button.interactable) return;
-        targetScale = .965f;
-        targetLift = -1;
+        pressed = true;
+        targetScale = holdUpOnPress ? 1.035f : .965f;
+        targetLift = holdUpOnPress ? 14 : -1;
+        if(holdUpOnPress) punch = .075f;
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
         if(!button.interactable) return;
+        pressed = false;
         targetScale = hovered ? 1.045f : 1;
         targetLift = hovered ? 4 : 0;
     }
@@ -123,9 +134,15 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         normalPosition = position;
     }
 
+    public void Reject()
+    {
+        shake = .22f;
+    }
+
     private void OnDisable()
     {
         if(rect == null) return;
+        pressed = false;
         rect.localScale = normalScale;
         rect.anchoredPosition = normalPosition;
     }

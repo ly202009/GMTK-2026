@@ -50,7 +50,10 @@ public class PowerUpShop : MonoBehaviour
             powerTexts[i].enableAutoSizing = true;
             powerTexts[i].fontSizeMin = 15;
             powerTexts[i].fontSizeMax = 24;
-            powerButtons[i].GetComponent<AnimatedButton>().idleFloat = 8;
+            AnimatedButton cardAnimation =
+                powerButtons[i].GetComponent<AnimatedButton>();
+            cardAnimation.idleFloat = 8;
+            cardAnimation.holdUpOnPress = true;
             int j = i;
             powerButtons[i].onClick.AddListener(() => BuyPowerup(j));
         }
@@ -84,6 +87,7 @@ public class PowerUpShop : MonoBehaviour
         {
             shownPowers[i] = available[i];
             purchased[i] = false;
+            powerButtons[i].interactable = true;
             powerButtons[i].GetComponent<AnimatedButton>()
                 .PlayEntrance(i * .045f);
             powerTexts[i].color = Color.white;
@@ -100,7 +104,10 @@ public class PowerUpShop : MonoBehaviour
         int power = shownPowers[slot];
         int cost = RunData.PowerupCost(power);
         if(purchased[slot] || RunData.instance.countdown < cost)
+        {
+            powerButtons[slot].GetComponent<AnimatedButton>().Reject();
             return;
+        }
 
         string progress = GetProgress(power);
         RunData.instance.countdown -= cost;
@@ -151,8 +158,7 @@ public class PowerUpShop : MonoBehaviour
             int cost = RunData.PowerupCost(power);
             powerTexts[i].text =
                 $"{RunData.Powerups[power].name}\n{GetProgress(power)}\n-{cost}s";
-            powerButtons[i].interactable =
-                RunData.instance.countdown >= cost;
+            powerButtons[i].interactable = true;
         }
     }
 }
