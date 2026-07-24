@@ -568,9 +568,9 @@ MonoBehaviour:
   wildCardMaterial: {fileID: 2100000, guid: d448e9bf10a74cfac443d5efa339774f, type: 2}
   transparentWildCardMaterial: {fileID: 2100000, guid: e559fac021b84dfbd554e6fab44a885a, type: 2}
   numberOfShownCards: 5
-  numberOfShownSeals: 0
+  numberOfShownSeals: 3
   cost: 
-  dragThreshold: 0
+  dragThreshold: 0.1
 --- !u!4 &2063330147
 Transform:
   m_ObjectHideFlags: 0
