@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 public enum Suit
 {
@@ -12,6 +11,28 @@ public enum Suit
     Club,
     Diamond,
     Spade
+}
+
+public class ModifierIdleMotion : MonoBehaviour
+{
+    private static int nextPhase;
+    private Vector3 startPosition;
+    private float phase;
+
+    private void Start()
+    {
+        startPosition = transform.localPosition;
+        phase = nextPhase++ * .35f;
+    }
+
+    private void LateUpdate()
+    {
+        float movement = Time.time * 2 + phase;
+        transform.localPosition = startPosition
+            + Vector3.up * Mathf.Sin(movement) * .035f;
+        transform.localRotation =
+            Quaternion.Euler(0, 0, Mathf.Cos(movement) * 3.2f);
+    }
 }
 
 [Serializable]
@@ -71,6 +92,8 @@ public sealed class DeckGenerator : MonoBehaviour
     private bool reshuffledCurrentState;
     private bool cardsChanged;
     private bool movingToShop;
+    private int shownDrawPileCount = -1;
+    private float drawPileCountPunch;
     private int numberOfPiles;
     private int handSize;
     private bool autoDraw;
@@ -216,6 +239,8 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void PlayCard(GameObject card, int pileIndex)
     {
+        if((cardData[card].properties & CardData.BonusTime) != 0)
+            RunData.instance.countdown += 2;
         handCards[handCards.IndexOf(card)] = null;
         piles[pileIndex].Add(card);
         StartCoroutine(AnimateCardToPile(card, pileIndex));
@@ -315,6 +340,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private void HandleReShuffle()
     {
         if(animatingCards.Count > 0) return;
+        if(!handCards.Exists(i => i != null)) return;
         if(handCards.Contains(null) && drawPile.Count > 0) return;
 
         if(IsHandPlayable())
@@ -325,7 +351,33 @@ public sealed class DeckGenerator : MonoBehaviour
 
         if(reshuffledCurrentState) return;
         reshuffledCurrentState = true;
+        StartCoroutine(ShakeAndReShuffle());
+    }
 
+    private IEnumerator ShakeAndReShuffle()
+    {
+        Transform cameraTransform = Camera.main.transform;
+        Vector3 cameraPosition = cameraTransform.position;
+        float time = 0;
+        while(time < .28f)
+        {
+            time += Time.deltaTime;
+            float strength = (1 - time / .28f) * .12f;
+            Vector2 offset = UnityEngine.Random.insideUnitCircle * strength;
+            cameraTransform.position = cameraPosition
+                + new Vector3(offset.x, offset.y, 0);
+            yield return null;
+        }
+        cameraTransform.position = cameraPosition;
+
+        if(IsHandPlayable())
+        {
+            reshuffledCurrentState = false;
+            yield break;
+        }
+
+        if(RunData.instance.handInvalidGain)
+            RunData.instance.countdown += 3;
         foreach(List<GameObject> pile in piles) Shuffle(pile);
         cardsChanged = true;
 
@@ -355,6 +407,20 @@ public sealed class DeckGenerator : MonoBehaviour
                 }
             }
         }
+
+        int pileIndex = 0;
+        while(!foundPlayableTop && drawPile.Count > 0)
+        {
+            int cardsToMove = Mathf.Min(2, drawPile.Count);
+            for(int i = 0; i < cardsToMove; i++)
+            {
+                GameObject card = drawPile[drawPile.Count - 1];
+                drawPile.RemoveAt(drawPile.Count - 1);
+                piles[pileIndex].Add(card);
+                pileIndex = (pileIndex + 1) % piles.Count;
+            }
+            foundPlayableTop = IsHandPlayable();
+        }
     }
 
     private void Update()
@@ -370,7 +436,7 @@ public sealed class DeckGenerator : MonoBehaviour
             if(card != null) return;
         movingToShop = true;
         RunData.instance.countdown += 90;
-        SceneManager.LoadScene("ShopScene");
+        SceneTransition.Load("ShopScene");
     }
 
     private void HandlePowerups()
@@ -439,9 +505,15 @@ public sealed class DeckGenerator : MonoBehaviour
             && !jumpingCards.Contains(handCards[i]))
             {
                 Vector3 handPosition = GetHandPosition(i);
-                if(handCards[i] == selectedHandCard) handPosition.y += .35f;
+                float fan = i - (handCards.Count - 1) * .5f;
+                handPosition.y -= Mathf.Abs(fan) * .018f;
+                if(handCards[i] == selectedHandCard)
+                    handPosition.y += .35f
+                        + Mathf.Sin(Time.time * 5) * .008f;
                 else if(hoveredCollider != null
-                && hoveredCollider.gameObject == handCards[i]) handPosition.y += .08f;
+                && hoveredCollider.gameObject == handCards[i])
+                    handPosition.y += .08f
+                        + Mathf.Sin(Time.time * 7) * .008f;
                 float amount = 1 - Mathf.Exp(-18 * Time.deltaTime);
                 handCards[i].transform.position =
                     Vector3.Lerp(handCards[i].transform.position, handPosition, amount);
@@ -459,8 +531,10 @@ public sealed class DeckGenerator : MonoBehaviour
                 float y = Mathf.Clamp(
                     (mousePosition.y - handCards[i].transform.position.y)
                     / (height * .5f), -1, 1);
+                Quaternion fanRotation = Quaternion.Euler(0, 0, fan * -1.35f);
                 Quaternion rotation = tilted ?
-                    Quaternion.Euler(y * 14, x * -14, 0) : Quaternion.identity;
+                    Quaternion.Euler(y * 14, x * -14, 0) * fanRotation :
+                    fanRotation;
                 handCards[i].transform.rotation = Quaternion.Lerp(
                     handCards[i].transform.rotation, rotation,
                     1 - Mathf.Exp(-15 * Time.deltaTime));
@@ -482,8 +556,15 @@ public sealed class DeckGenerator : MonoBehaviour
                 bool isTopCard = j == piles[i].Count - 1;
                 if(!animatingCards.Contains(piles[i][j]))
                 {
-                    piles[i][j].transform.position = pilePosition;
-                    piles[i][j].transform.localRotation = Quaternion.identity;
+                    float idle = Time.time * 1.7f + i * 1.5f;
+                    Vector3 idlePosition = isTopCard ?
+                        new Vector3(Mathf.Cos(idle) * .018f,
+                            Mathf.Sin(idle) * .055f, 0) : Vector3.zero;
+                    piles[i][j].transform.position =
+                        pilePosition + idlePosition;
+                    piles[i][j].transform.localRotation = isTopCard ?
+                        Quaternion.Euler(0, 0, Mathf.Sin(idle) * 1.4f) :
+                        Quaternion.identity;
                 }
                 SetSortingOrder(piles[i][j], j + 10);
                 piles[i][j].GetComponent<Collider2D>().enabled =
@@ -494,8 +575,15 @@ public sealed class DeckGenerator : MonoBehaviour
         for(int i = 0; i < drawPile.Count; i++)
         {
             bool isTopCard = i == drawPile.Count - 1;
-            drawPile[i].transform.position = new Vector3(DrawPileX, DrawPileY, 0);
-            drawPile[i].transform.localRotation = Quaternion.identity;
+            float idle = Time.time * 1.5f;
+            Vector3 idlePosition = isTopCard ?
+                new Vector3(Mathf.Cos(idle) * .022f,
+                    Mathf.Sin(idle) * .07f, 0) : Vector3.zero;
+            drawPile[i].transform.position =
+                new Vector3(DrawPileX, DrawPileY, 0) + idlePosition;
+            drawPile[i].transform.localRotation = isTopCard ?
+                Quaternion.Euler(0, 0, Mathf.Sin(idle) * 1.7f) :
+                Quaternion.identity;
             SetSortingOrder(drawPile[i], i);
             SpriteRenderer drawRenderer = drawPile[i].GetComponent<SpriteRenderer>();
             drawRenderer.sprite = cardBack;
@@ -507,8 +595,19 @@ public sealed class DeckGenerator : MonoBehaviour
             drawPile[i].GetComponent<Collider2D>().enabled = isTopCard;
         }
 
-        drawPileCountText.transform.parent.position = Camera.main.WorldToScreenPoint(
+        Transform drawCount = drawPileCountText.transform.parent;
+        drawCount.position = Camera.main.WorldToScreenPoint(
             new Vector3(DrawPileX, DrawPileY + 1.5f, 0));
+        if(shownDrawPileCount != drawPile.Count)
+        {
+            shownDrawPileCount = drawPile.Count;
+            drawPileCountPunch = .18f;
+        }
+        drawPileCountPunch = Mathf.MoveTowards(drawPileCountPunch, 0,
+            Time.deltaTime * 1.4f);
+        drawCount.localScale = Vector3.one * (1 + drawPileCountPunch);
+        drawPileCountText.color = drawPile.Count <= 5 ?
+            new Color(1, .45f, .12f) : Color.white;
         drawPileCountText.text = drawPile.Count.ToString();
     }
 
@@ -518,6 +617,7 @@ public sealed class DeckGenerator : MonoBehaviour
         Vector3 startPosition = card.transform.position;
         Vector3 endPosition = GetPilePosition(pileIndex);
         Quaternion startRotation = card.transform.localRotation;
+        Vector3 normalScale = card.transform.localScale;
         float time = 0;
 
         while(time < cardMoveDuration)
@@ -525,14 +625,29 @@ public sealed class DeckGenerator : MonoBehaviour
             time += Time.deltaTime;
             float amount = Mathf.Clamp01(time / cardMoveDuration);
             amount = amount * amount * (3 - 2 * amount);
-            card.transform.position = Vector3.Lerp(startPosition, endPosition, amount);
+            Vector3 position = Vector3.Lerp(startPosition, endPosition, amount);
+            position.y += Mathf.Sin(amount * Mathf.PI) * .25f;
+            card.transform.position = position;
+            card.transform.localScale = normalScale
+                * (1 + Mathf.Sin(amount * Mathf.PI) * .045f);
             card.transform.localRotation =
                 Quaternion.Lerp(startRotation, Quaternion.identity, amount);
             yield return null;
         }
 
         card.transform.position = endPosition;
+        card.transform.localScale = normalScale;
         card.transform.localRotation = Quaternion.identity;
+        time = 0;
+        while(time < .08f)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / .08f);
+            card.transform.localScale = normalScale
+                * (1 + Mathf.Sin(amount * Mathf.PI) * .06f);
+            yield return null;
+        }
+        card.transform.localScale = normalScale;
         if((cardData[card].properties & CardData.Transparent) != 0)
         {
             SpriteRenderer[] renderers =
@@ -565,6 +680,7 @@ public sealed class DeckGenerator : MonoBehaviour
         animatingCards.Add(card);
         Vector3 startPosition = card.transform.position;
         Vector3 endPosition = GetHandPosition(handIndex);
+        Vector3 normalScale = card.transform.localScale;
         float time = 0;
 
         while(time < cardMoveDuration)
@@ -572,11 +688,16 @@ public sealed class DeckGenerator : MonoBehaviour
             time += Time.deltaTime;
             float amount = Mathf.Clamp01(time / cardMoveDuration);
             amount = amount * amount * (3 - 2 * amount);
-            card.transform.position = Vector3.Lerp(startPosition, endPosition, amount);
+            Vector3 position = Vector3.Lerp(startPosition, endPosition, amount);
+            position.y += Mathf.Sin(amount * Mathf.PI) * .35f;
+            card.transform.position = position;
+            card.transform.localScale = normalScale
+                * (1 + Mathf.Sin(amount * Mathf.PI) * .04f);
             yield return null;
         }
 
         card.transform.position = endPosition;
+        card.transform.localScale = normalScale;
         animatingCards.Remove(card);
         cardsChanged = true;
     }
@@ -692,6 +813,7 @@ public sealed class DeckGenerator : MonoBehaviour
             seal.transform.SetParent(card.transform, false);
             seal.transform.localPosition = Properties[i].sealPosition;
             seal.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+            seal.AddComponent<ModifierIdleMotion>();
             SpriteRenderer sealRenderer = seal.AddComponent<SpriteRenderer>();
             sealRenderer.sprite = propertySeals[Properties[i].property];
             sealRenderer.sharedMaterial = cardMaterials[0];
@@ -728,7 +850,6 @@ public sealed class DeckGenerator : MonoBehaviour
             sealRenderer.sortingOrder = cardOrder + 1;
             sealRenderer.enabled =
                 (cardData[card].properties & Properties[i].property) != 0;
-            sealRenderer.transform.localPosition = Properties[i].sealPosition;
         }
 
     }

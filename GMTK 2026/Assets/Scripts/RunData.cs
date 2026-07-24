@@ -14,7 +14,7 @@ public class RunData : MonoBehaviour
     public bool allowSuitMatching;
     public bool allowFreeze;
     public bool handInvalidGain;
-    public int countdown = 110;
+    public int countdown = 600;
     public bool autoDraw;
     public List<CardData> deck = new();
 
@@ -70,9 +70,9 @@ public class RunData : MonoBehaviour
             for(int i = 1; i <= 13; i++)
             {
                 int properties = 0;
-                for(int j = 0; j < 5; j++)
-                    if(UnityEngine.Random.Range(0, 5) == 1)
-                        properties |= 1 << j;
+                // for(int j = 0; j < 5; j++)
+                //     if(UnityEngine.Random.Range(0, 5) == 1)
+                //         properties |= 1 << j;
 
                 deck.Add(new CardData
                 {

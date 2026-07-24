@@ -8,7 +8,6 @@ using System.Linq;
 using System;
 using TMPro;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class Shop : MonoBehaviour
 {
@@ -53,31 +52,34 @@ public class Shop : MonoBehaviour
         (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 3)
     };
 
-    private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end, float duration)
+    private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end,
+        float duration, float delay = 0)
     {
         movingThings.Add(thing);
+        if(delay > 0) yield return new WaitForSeconds(delay);
+        Vector3 normalScale = thing.transform.localScale;
         for (float t = 0.0f; t <= duration; t += Time.deltaTime)
         {
-            thing.transform.position = Vector3.Lerp(start, end, Mathf.Sqrt(t/duration));
+            float amount = Mathf.Clamp01(t / duration);
+            amount = 1 - Mathf.Pow(1 - amount, 3);
+            Vector3 position = Vector3.Lerp(start, end, amount);
+            position.y += Mathf.Sin(amount * Mathf.PI) * .08f;
+            thing.transform.position = position;
+            thing.transform.localScale = normalScale
+                * (1 + Mathf.Sin(amount * Mathf.PI) * .035f);
             yield return null;
         }
         thing.transform.position = end;
+        thing.transform.localScale = normalScale;
         movingThings.Remove(thing);
     }
     private IEnumerator ShakeCard(GameObject thing, float duration)
     {
         movingThings.Add(thing);
-        int track = 0;
         for (float t = 0; t < duration; t += Time.deltaTime)
         {
-            if (track % 2 == 0){
-                thing.transform.localRotation = Quaternion.Euler(0, 0, 15f);
-            }
-            else
-            {
-                thing.transform.localRotation = Quaternion.Euler(0, 0, -15f);
-            }
-            track++;
+            thing.transform.localRotation =
+                Quaternion.Euler(0, 0, Mathf.Sin(t * 35) * 5);
             yield return null;
         }
         thing.transform.localRotation = Quaternion.identity;
@@ -141,11 +143,13 @@ public class Shop : MonoBehaviour
         }
         for (int i = 0; i < numberOfShownCards; i++)
         {
-            StartCoroutine(MoveThing(cards[i], shop.position, cardPositions[i], 0.1f));
+            StartCoroutine(MoveThing(cards[i], shop.position,
+                cardPositions[i], .16f, i * .025f));
         }
         for (int i = 0; i < numberOfShownSeals; i++)
         {
-            StartCoroutine(MoveThing(seals[i], shop.position, sealPositions[i], 0.1f));
+            StartCoroutine(MoveThing(seals[i], shop.position,
+                sealPositions[i], .16f, (i + 1) * .025f));
         }
     }
     private void ChooseCards()
@@ -196,13 +200,16 @@ public class Shop : MonoBehaviour
             || movingThings.Contains(seals[i])) continue;
             float lift = i == sealSelected ? .28f :
                 hoveredCollider != null && hoveredCollider.gameObject == seals[i] ? .08f : 0;
+            float idle = Mathf.Sin(Time.time * 2.1f + i * 1.7f) * .065f;
             seals[i].transform.position = Vector3.Lerp(seals[i].transform.position,
-                sealPositions[i] + new Vector3(0, lift, 0),
+                sealPositions[i] + new Vector3(0, lift + idle, 0),
                 1 - Mathf.Exp(-20 * Time.deltaTime));
             bool tilted = hoveredCollider != null
                 && hoveredCollider.gameObject == seals[i];
             Quaternion rotation = tilted ?
-                GetPressureRotation(seals[i], mousePos) : Quaternion.identity;
+                GetPressureRotation(seals[i], mousePos) :
+                Quaternion.Euler(0, 0,
+                    Mathf.Sin(Time.time * 1.7f + i * 1.4f) * 3);
             seals[i].transform.rotation = Quaternion.Lerp(
                 seals[i].transform.rotation, rotation,
                 1 - Mathf.Exp(-15 * Time.deltaTime));
@@ -294,6 +301,7 @@ public class Shop : MonoBehaviour
             seal.transform.SetParent(card.transform, false);
             seal.transform.localPosition = Properties[i].sealPosition;
             seal.transform.localScale = new Vector3(1.2f, 1.2f, 1);
+            seal.AddComponent<ModifierIdleMotion>();
             SpriteRenderer sealRenderer = seal.AddComponent<SpriteRenderer>();
             sealRenderer.sprite = propertySeals[Properties[i].property];
             sealRenderer.sharedMaterial = cardMaterials[0];
@@ -333,7 +341,7 @@ public class Shop : MonoBehaviour
 
     private void MoveToGame()
     {
-        SceneManager.LoadScene("MainScene");
+        SceneTransition.Load("MainScene");
     }
 
     void Start()

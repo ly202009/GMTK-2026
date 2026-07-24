@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class PowerUpShop : MonoBehaviour
 {
@@ -53,7 +52,7 @@ public class PowerUpShop : MonoBehaviour
 
     private void MoveToGame()
     {
-        SceneManager.LoadScene("MainScene");
+        SceneTransition.Load("MainScene");
     }
 
     private void ShowPowerups()
@@ -75,6 +74,8 @@ public class PowerUpShop : MonoBehaviour
         {
             shownPowers[i] = available[i];
             purchased[i] = false;
+            powerButtons[i].GetComponent<AnimatedButton>()
+                .PlayEntrance(i * .045f);
             powerTexts[i].color = new Color(1, .15f, .15f);
             powerButtons[i].GetComponent<Image>().color =
                 new Color(.04f, .04f, .055f, .95f);

@@ -934,6 +934,7 @@ GameObject:
   - component: {fileID: 2160000012}
   - component: {fileID: 2160000014}
   - component: {fileID: 2160000013}
+  - component: {fileID: 2160000015}
   m_Layer: 5
   m_Name: Reroll Button
   m_TagString: Untagged
@@ -1194,6 +1195,7 @@ GameObject:
   - component: {fileID: 2171000012}
   - component: {fileID: 2171000014}
   - component: {fileID: 2171000013}
+  - component: {fileID: 2171000015}
   m_Layer: 5
   m_Name: Move To Game Button
   m_TagString: Untagged
@@ -1440,6 +1442,30 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &2160000015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2160000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d4f7af22f994fdcbac6b879905fafcc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedButton
+--- !u!114 &2171000015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2171000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d4f7af22f994fdcbac6b879905fafcc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedButton
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
