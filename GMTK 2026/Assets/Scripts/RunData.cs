@@ -14,7 +14,7 @@ public class RunData : MonoBehaviour
     public bool allowSuitMatching;
     public bool allowFreeze;
     public bool handInvalidGain;
-    public int countdown = 600;
+    public int countdown = 120;
     public bool autoDraw;
     public List<CardData> deck = new();
 

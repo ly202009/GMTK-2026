@@ -73,6 +73,9 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private TMP_Text powerupText;
     [SerializeField] private RectTransform powerupPanel;
     [SerializeField] private TMP_Text drawPileCountText;
+    [SerializeField] private TMP_Text comboText;
+    [SerializeField] private RectTransform comboPanel;
+    [SerializeField] private CanvasGroup comboGroup;
 
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
@@ -104,6 +107,11 @@ public sealed class DeckGenerator : MonoBehaviour
     private float powerupDuration = 10;
     private float cardMoveDuration = .18f;
     private float dragThreshold = .15f;
+    private int combo;
+    private float comboTime;
+    private float comboWindow = 3.5f;
+    private Coroutine comboAnimation;
+    private Vector2 comboPosition;
 
     private void Start()
     {
@@ -111,6 +119,8 @@ public sealed class DeckGenerator : MonoBehaviour
         handSize = RunData.instance.handSize;
         autoDraw = RunData.instance.autoDraw;
         UpdatePowerupUI();
+        comboPosition = comboPanel.anchoredPosition;
+        comboGroup.alpha = 0;
 
         List<CardData> deck = new(RunData.instance.deck);
         Shuffle(deck);
@@ -239,8 +249,18 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void PlayCard(GameObject card, int pileIndex)
     {
-        if((cardData[card].properties & CardData.BonusTime) != 0)
-            RunData.instance.countdown += 2;
+        if(comboTime <= 0) combo = 0;
+        combo++;
+        comboTime = comboWindow;
+        bool bonusTime =
+            (cardData[card].properties & CardData.BonusTime) != 0;
+        int timeGain = combo <= 1 ? 0 :
+            Mathf.CeilToInt((combo - 1) / 4f);
+        if(bonusTime) timeGain++;
+        RunData.instance.countdown += timeGain;
+        if(comboAnimation != null) StopCoroutine(comboAnimation);
+        comboAnimation = StartCoroutine(ShowCombo(timeGain, bonusTime));
+
         handCards[handCards.IndexOf(card)] = null;
         piles[pileIndex].Add(card);
         StartCoroutine(AnimateCardToPile(card, pileIndex));
@@ -423,8 +443,75 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
+    private IEnumerator ShowCombo(int timeGain, bool bonusTime)
+    {
+        comboText.text = timeGain > 0 ?
+            $"{combo}x COMBO\n<color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
+            + $"+{timeGain} SECOND{(timeGain == 1 ? "" : "S")}</color>" :
+            "1x COMBO";
+        Color comboColor = bonusTime ?
+            new Color(1, .78f, .12f) : new Color(.55f, 1, .65f);
+        comboGroup.alpha = 1;
+        comboPanel.anchoredPosition = comboPosition - Vector2.up * 24;
+        comboPanel.localScale = Vector3.one * .35f;
+        float direction = combo % 2 == 0 ? -1 : 1;
+        comboPanel.localRotation = Quaternion.Euler(0, 0, direction * 8);
+
+        float time = 0;
+        while(time < .16f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / .16f);
+            amount = 1 - Mathf.Pow(1 - amount, 3);
+            comboPanel.localScale =
+                Vector3.one * Mathf.Lerp(.35f, 1.24f, amount);
+            comboPanel.anchoredPosition = Vector2.Lerp(
+                comboPosition - Vector2.up * 24, comboPosition, amount);
+            comboPanel.localRotation = Quaternion.Lerp(
+                Quaternion.Euler(0, 0, direction * 8),
+                Quaternion.Euler(0, 0, direction * -2), amount);
+            comboText.color = Color.Lerp(Color.white, comboColor, amount);
+            yield return null;
+        }
+
+        time = 0;
+        while(time < .42f)
+        {
+            time += Time.unscaledDeltaTime;
+            float bounce = Mathf.Sin(time * 20) * Mathf.Exp(-time * 9);
+            comboPanel.localScale = Vector3.one * (1 + bounce * .11f);
+            comboPanel.localRotation =
+                Quaternion.Euler(0, 0, bounce * direction * 3);
+            yield return null;
+        }
+
+        time = 0;
+        while(time < .3f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / .3f);
+            comboGroup.alpha = 1 - amount;
+            comboPanel.anchoredPosition =
+                comboPosition + new Vector2(direction * amount * 16,
+                    amount * 58);
+            comboPanel.localScale = Vector3.one * (1 + amount * .08f);
+            yield return null;
+        }
+
+        comboGroup.alpha = 0;
+        comboPanel.anchoredPosition = comboPosition;
+        comboPanel.localScale = Vector3.one;
+        comboPanel.localRotation = Quaternion.identity;
+        comboAnimation = null;
+    }
+
     private void Update()
     {
+        if(comboTime > 0)
+        {
+            comboTime -= Time.unscaledDeltaTime;
+            if(comboTime <= 0) combo = 0;
+        }
         HandlePowerups();
         HandleClicks();
         if(cardsChanged) HandleAutoPlay();
