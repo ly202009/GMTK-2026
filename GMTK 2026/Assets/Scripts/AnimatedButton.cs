@@ -18,6 +18,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     private float appearDelay;
     private bool hovered;
     private bool entrancePlayed;
+    public float idleFloat = 4;
 
     private void Awake()
     {
@@ -70,7 +71,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
             1 - Mathf.Exp(-22 * Time.unscaledDeltaTime));
         rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition,
             normalPosition + Vector2.up * (targetLift
-                + Mathf.Sin(Time.unscaledTime * 1.8f + phase) * 4),
+                + Mathf.Sin(Time.unscaledTime * 1.8f + phase) * idleFloat),
             1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
     }
 

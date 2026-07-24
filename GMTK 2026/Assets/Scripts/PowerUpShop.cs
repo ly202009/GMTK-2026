@@ -41,6 +41,7 @@ public class PowerUpShop : MonoBehaviour
             rect.anchoredPosition = new Vector2((i - 1) * 310, 0);
             rect.sizeDelta = new Vector2(280, 160);
             powerTexts[i] = powerButtons[i].GetComponentInChildren<TMP_Text>();
+            powerButtons[i].GetComponent<AnimatedButton>().idleFloat = 8;
             int j = i;
             powerButtons[i].onClick.AddListener(() => BuyPowerup(j));
         }

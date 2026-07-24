@@ -180,8 +180,10 @@ public class Shop : MonoBehaviour
             || movingThings.Contains(cards[i])) continue;
             float lift = i == cardSelected ? .28f :
                 hoveredCollider != null && hoveredCollider.gameObject == cards[i] ? .08f : 0;
+            float idle = Time.time * 1.8f + i * 1.35f;
             cards[i].transform.position = Vector3.Lerp(cards[i].transform.position,
-                cardPositions[i] + new Vector3(0, lift, 0),
+                cardPositions[i] + new Vector3(Mathf.Cos(idle) * .012f,
+                    lift + Mathf.Sin(idle) * .06f, 0),
                 1 - Mathf.Exp(-20 * Time.deltaTime));
             bool tilted = hoveredCollider != null
                 && hoveredCollider.gameObject == cards[i];

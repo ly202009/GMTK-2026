@@ -900,6 +900,9 @@ public sealed class DeckGenerator : MonoBehaviour
             {
                 Vector3 handPosition = GetHandPosition(i);
                 float fan = i - (handCards.Count - 1) * .5f;
+                float idle = Time.time * 1.8f + i * 1.25f;
+                handPosition.x += Mathf.Cos(idle) * .012f;
+                handPosition.y += Mathf.Sin(idle) * .05f;
                 handPosition.y -= Mathf.Abs(fan) * .018f;
                 if(handCards[i] == selectedHandCard)
                     handPosition.y += .35f
