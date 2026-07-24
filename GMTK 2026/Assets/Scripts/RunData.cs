@@ -22,6 +22,7 @@ public class RunData : MonoBehaviour
     public bool bossRound => round > 0 && round % 3 == 0;
 
     private float countdownTime;
+    private bool timerFrozen;
     public float countdownValue => Mathf.Max(0, countdown - countdownTime);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -64,6 +65,7 @@ public class RunData : MonoBehaviour
         while(true)
         {
             yield return null;
+            if(timerFrozen) continue;
             if(countdown <= 0)
             {
                 countdownTime = 0;
@@ -75,6 +77,11 @@ public class RunData : MonoBehaviour
             countdownTime -= 1;
             countdown--;
         }
+    }
+
+    public void SetTimerFrozen(bool frozen)
+    {
+        timerFrozen = frozen;
     }
 
     private void CreateDeck()
