@@ -637,7 +637,7 @@ public sealed class DeckGenerator : MonoBehaviour
     {
         string typeText = comboType.Length > 0 ?
             $"\n<size=20><color=#62D9FF>{comboType}  "
-            + $"TIME x{timeMultiplier:0.00}</color></size>" : "";
+            + $"x{timeMultiplier:0.00}</color></size>" : "";
         comboText.text = timeGain > 0 ?
             $"<size=42>{combo}x COMBO</size>\n"
             + $"<size=30><color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
