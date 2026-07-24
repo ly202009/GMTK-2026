@@ -8,6 +8,7 @@ using System.Linq;
 using System;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Shop : MonoBehaviour
 {
@@ -24,6 +25,7 @@ public class Shop : MonoBehaviour
     [SerializeField] private float dragThreshold;
     [SerializeField] private Button rerollButton;
     [SerializeField] private TMP_Text rerollText;
+    [SerializeField] private Button moveToGameButton;
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
     private Sprite cardBack;
@@ -44,11 +46,11 @@ public class Shop : MonoBehaviour
     private int rerolls;
     private static (int property, string seal, Vector3 sealPosition, int cost)[] Properties =
     {
-        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 6),
-        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 15),
-        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 10),
-        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 18),
-        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 8)
+        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 3),
+        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 5),
+        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 7),
+        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 8),
+        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 3)
     };
 
     private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end, float duration)
@@ -75,6 +77,7 @@ public class Shop : MonoBehaviour
             {
                 thing.transform.localRotation = Quaternion.Euler(0, 0, -15f);
             }
+            track++;
             yield return null;
         }
         thing.transform.localRotation = Quaternion.identity;
@@ -147,6 +150,7 @@ public class Shop : MonoBehaviour
     }
     private void ChooseCards()
     {
+        if(applyingCard != null) return;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D hoveredCollider = Physics2D.OverlapPoint(mousePos);
 
@@ -223,10 +227,12 @@ public class Shop : MonoBehaviour
         int sealSelect = sealSelected;
         int property = Properties[shownSeal[sealSelect]].property;
         int modifierCost = Properties[shownSeal[sealSelect]].cost;
+        applyingCard = cards[cardSelect];
         if((shownCards[cardSelect].properties & property) != 0
-        || RunData.instance.countdown < modifierCost)
+        || RunData.instance.countdown < modifierCost || !isAvailable[sealSelect])
         {
             yield return StartCoroutine(ShakeCard(seals[sealSelect], 0.2f));
+            applyingCard = null;
             yield break;
         }
 
@@ -248,7 +254,6 @@ public class Shop : MonoBehaviour
 
         seals[sealSelect].SetActive(false);
 
-        applyingCard = cards[cardSelect];
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, new Vector3(0, 0, 0), 0.1f));
         yield return StartCoroutine(ShakeCard(cards[cardSelect], 0.2f)); 
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, cardPositions[cardSelect], 0.1f));
@@ -261,12 +266,20 @@ public class Shop : MonoBehaviour
         GameObject card = Instantiate(cardTemplate);
         card.transform.localScale = new Vector3(card.transform.localScale.x, card.transform.localScale.x, 1);
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
+        int suitRow = cardData.suit switch
+        {
+            Suit.Heart => 3,
+            Suit.Club => 1,
+            Suit.Diamond => 0,
+            Suit.Spade => 2,
+            _ => 0
+        };
 
         for(int i = 0; i < cardSprites.Length; i++)
         {
             int x = Mathf.RoundToInt(cardSprites[i].rect.x / 24);
             int y = Mathf.RoundToInt(cardSprites[i].rect.y / 36);
-            if(x != cardData.values[0] - 1 || y != (int)cardData.suit) continue;
+            if(x != cardData.values[0] - 1 || y != suitRow) continue;
             cardRenderer.sprite = cardSprites[i];
             break;
         }
@@ -318,6 +331,11 @@ public class Shop : MonoBehaviour
         ShowCards();
     }
 
+    private void MoveToGame()
+    {
+        SceneManager.LoadScene("MainScene");
+    }
+
     void Start()
     {
         shownCards = new CardData[numberOfShownCards];
@@ -349,6 +367,7 @@ public class Shop : MonoBehaviour
 
         shop = GetComponent<Transform>();
         rerollButton.onClick.AddListener(Reroll);
+        moveToGameButton.onClick.AddListener(MoveToGame);
         ShowCards();
 
         
@@ -360,7 +379,7 @@ public class Shop : MonoBehaviour
         rerollButton.interactable = RunData.instance.countdown >= rerollCost
             && movingThings.Count == 0 && applyingCard == null;
         ChooseCards();
-        if (cardSelected != -1 && sealSelected != -1)
+        if(cardSelected != -1 && sealSelected != -1 && applyingCard == null)
         {
             StartCoroutine(ApplySealToCard());
             cardSelected = -1;

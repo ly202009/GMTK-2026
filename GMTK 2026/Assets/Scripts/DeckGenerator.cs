@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public enum Suit
 {
@@ -50,6 +51,7 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material transparentWildCardMaterial;
     [SerializeField] private TMP_Text powerupText;
     [SerializeField] private RectTransform powerupPanel;
+    [SerializeField] private TMP_Text drawPileCountText;
 
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
@@ -68,6 +70,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private Vector2 pressedPosition;
     private bool reshuffledCurrentState;
     private bool cardsChanged;
+    private bool movingToShop;
     private int numberOfPiles;
     private int handSize;
     private bool autoDraw;
@@ -361,6 +364,13 @@ public sealed class DeckGenerator : MonoBehaviour
         if(cardsChanged) HandleAutoPlay();
         HandleReShuffle();
         if(cardsChanged) HandleAutoPlay();
+
+        if(movingToShop || drawPile.Count > 0 || animatingCards.Count > 0) return;
+        foreach(GameObject card in handCards)
+            if(card != null) return;
+        movingToShop = true;
+        RunData.instance.countdown += 90;
+        SceneManager.LoadScene("ShopScene");
     }
 
     private void HandlePowerups()
@@ -496,6 +506,10 @@ public sealed class DeckGenerator : MonoBehaviour
                 if(seals[j].gameObject != drawPile[i]) seals[j].enabled = false;
             drawPile[i].GetComponent<Collider2D>().enabled = isTopCard;
         }
+
+        drawPileCountText.transform.parent.position = Camera.main.WorldToScreenPoint(
+            new Vector3(DrawPileX, DrawPileY + 1.5f, 0));
+        drawPileCountText.text = drawPile.Count.ToString();
     }
 
     private IEnumerator AnimateCardToPile(GameObject card, int pileIndex)

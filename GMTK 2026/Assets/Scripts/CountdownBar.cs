@@ -8,9 +8,8 @@ public class CountdownBar : MonoBehaviour
 
     private void Update()
     {
-        if(countdownBar != null)
-            countdownBar.sizeDelta =
-                new Vector2(Mathf.Max(0, RunData.instance.countdown) * 16, 48);
+        countdownBar.sizeDelta =
+            new Vector2(48, RunData.instance.countdownValue * 9);
         countdownText.text = RunData.instance.countdown.ToString();
     }
 }

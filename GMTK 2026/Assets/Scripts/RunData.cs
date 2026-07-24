@@ -14,9 +14,12 @@ public class RunData : MonoBehaviour
     public bool allowSuitMatching;
     public bool allowFreeze;
     public bool handInvalidGain;
-    public int countdown = 60;
+    public int countdown = 110;
     public bool autoDraw;
     public List<CardData> deck = new();
+
+    private float countdownTime;
+    public float countdownValue => Mathf.Max(0, countdown - countdownTime);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Create()
@@ -43,19 +46,18 @@ public class RunData : MonoBehaviour
 
     private IEnumerator CountdownTimer()
     {
-        float time = 0;
         while(true)
         {
             yield return null;
             if(countdown <= 0)
             {
-                time = 0;
+                countdownTime = 0;
                 continue;
             }
 
-            time += Time.unscaledDeltaTime * timerSpeed;
-            if(time < 1) continue;
-            time -= 1;
+            countdownTime += Time.unscaledDeltaTime * timerSpeed;
+            if(countdownTime < 1) continue;
+            countdownTime -= 1;
             countdown--;
         }
     }

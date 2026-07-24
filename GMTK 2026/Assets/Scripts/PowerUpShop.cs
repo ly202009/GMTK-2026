@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PowerUpShop : MonoBehaviour
 {
@@ -19,6 +20,7 @@ public class PowerUpShop : MonoBehaviour
 
     [SerializeField] private Button rerollButton;
     [SerializeField] private TMP_Text rerollText;
+    [SerializeField] private Button moveToGameButton;
 
     private Button[] powerButtons = new Button[3];
     private TMP_Text[] powerTexts = new TMP_Text[3];
@@ -45,7 +47,13 @@ public class PowerUpShop : MonoBehaviour
         }
 
         rerollButton.onClick.AddListener(Reroll);
+        moveToGameButton.onClick.AddListener(MoveToGame);
         ShowPowerups();
+    }
+
+    private void MoveToGame()
+    {
+        SceneManager.LoadScene("MainScene");
     }
 
     private void ShowPowerups()
