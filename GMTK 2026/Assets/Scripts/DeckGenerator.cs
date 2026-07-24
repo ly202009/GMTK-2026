@@ -109,15 +109,17 @@ public sealed class DeckGenerator : MonoBehaviour
     private bool autoDraw;
     private bool usedDoubles;
     private bool usedSuitMatching;
+    private bool usedFreeze;
     private float doublesCountdown;
     private float suitMatchingCountdown;
+    private float freezeCountdown;
     private float powerupDuration = 10;
     private float cardMoveDuration = .18f;
     private float dragThreshold = .15f;
     private int combo;
     private float comboTime;
-    private float comboWindow = 1.8f;
-    private float comboStepWindow = 1.8f;
+    private float comboWindow = 2.25f;
+    private float comboStepWindow = 2.25f;
     private int comboDecayGear;
     private List<CardData> comboHistory = new();
     private float comboFractionalTime;
@@ -146,7 +148,8 @@ public sealed class DeckGenerator : MonoBehaviour
         for(int i = 0; i < Properties.Length; i++)
             if(Properties[i].seal != null)
             {
-                Sprite[] seals = Resources.LoadAll<Sprite>(Properties[i].seal);
+                Sprite[] seals = Resources.LoadAll<Sprite>(
+                    "modifiers/" + Properties[i].seal);
                 if(seals.Length > 0)
                     propertySeals.Add(Properties[i].property, seals[0]);
             }
@@ -769,6 +772,14 @@ public sealed class DeckGenerator : MonoBehaviour
         float levelShake = comboDecayGear > 0 && combo > 0 ?
             Mathf.Sin(Time.unscaledTime * (18 + comboDecayGear * 3))
                 * Mathf.Min(8, comboDecayGear * 1.3f) : 0;
+        if(handSize > 0 && Camera.main != null)
+        {
+            Vector3 comboScreenPosition = Camera.main.WorldToScreenPoint(
+                GetHandPosition(0) + new Vector3(-1.35f, .55f, 0));
+            comboScreenPosition.x = Mathf.Max(70, comboScreenPosition.x);
+            comboLevelPanel.position = comboScreenPosition;
+            comboLevelPosition = comboLevelPanel.anchoredPosition;
+        }
         comboLevelPanel.anchoredPosition =
             comboLevelPosition + Vector2.right * levelShake;
         comboLevelPanel.localScale = Vector3.one
@@ -798,7 +809,8 @@ public sealed class DeckGenerator : MonoBehaviour
             if(card != null) return;
         RunData.instance.countdown += 50;
         movingToShop = true;
-        SceneTransition.Load("ShopScene");
+        SceneTransition.Load(RunData.instance.bossRound ?
+            "PowerUpShopScene" : "ShopScene");
     }
 
     private void HandlePowerups()
@@ -817,6 +829,13 @@ public sealed class DeckGenerator : MonoBehaviour
             doublesCountdown = powerupDuration;
         }
 
+        if(!usedFreeze && RunData.instance.allowFreeze
+        && Keyboard.current.digit3Key.wasPressedThisFrame)
+        {
+            usedFreeze = true;
+            freezeCountdown = powerupDuration;
+        }
+
         if(suitMatchingCountdown > 0)
             suitMatchingCountdown = Mathf.Max(0,
                 suitMatchingCountdown - Time.deltaTime);
@@ -824,6 +843,11 @@ public sealed class DeckGenerator : MonoBehaviour
         if(doublesCountdown > 0)
             doublesCountdown = Mathf.Max(0, doublesCountdown - Time.deltaTime);
 
+        if(freezeCountdown > 0)
+            freezeCountdown = Mathf.Max(0,
+                freezeCountdown - Time.deltaTime);
+
+        RunData.instance.SetTimerFrozen(freezeCountdown > 0);
         UpdatePowerupUI();
     }
 
@@ -834,6 +858,8 @@ public sealed class DeckGenerator : MonoBehaviour
             "Suit Matching", usedSuitMatching, suitMatchingCountdown);
         AddPowerupLine(lines, RunData.instance.allowDoubles, "2",
             "Doubles", usedDoubles, doublesCountdown);
+        AddPowerupLine(lines, RunData.instance.allowFreeze, "3",
+            "Freeze", usedFreeze, freezeCountdown);
 
         powerupText.text = string.Join("\n", lines);
         powerupPanel.sizeDelta = new Vector2(520, lines.Count * 40 + 20);
@@ -847,6 +873,12 @@ public sealed class DeckGenerator : MonoBehaviour
             countdown > 0 ? $"<color=#FFE066>{countdown:0.0}s</color>" :
             "<color=#888888>USED</color>";
         lines.Add($"[{key}] {name}  -  {status}");
+    }
+
+    private void OnDestroy()
+    {
+        if(RunData.instance != null)
+            RunData.instance.SetTimerFrozen(false);
     }
 
     private void LateUpdate()
@@ -902,7 +934,7 @@ public sealed class DeckGenerator : MonoBehaviour
                     1 - Mathf.Exp(-15 * Time.deltaTime));
             }
             int sortingOrder = handCards[i] == draggedCard ? 1000 :
-                handCards[i] == selectedHandCard ? 100 : 0;
+                handCards[i] == selectedHandCard ? 100 : i;
             SetSortingOrder(handCards[i], sortingOrder);
             handCards[i].GetComponent<Collider2D>().enabled =
                 handCards[i] != draggedCard && !animatingCards.Contains(handCards[i])
@@ -942,7 +974,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 new Vector3(Mathf.Cos(idle) * .022f,
                     Mathf.Sin(idle) * .07f, 0) : Vector3.zero;
             drawPile[i].transform.position =
-                new Vector3(DrawPileX, DrawPileY, 0) + idlePosition;
+                GetDrawPilePosition() + idlePosition;
             drawPile[i].transform.localRotation = isTopCard ?
                 Quaternion.Euler(0, 0, Mathf.Sin(idle) * 1.7f) :
                 Quaternion.identity;
@@ -959,7 +991,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
         Transform drawCount = drawPileCountText.transform.parent;
         drawCount.position = Camera.main.WorldToScreenPoint(
-            new Vector3(DrawPileX, DrawPileY + 1.5f, 0));
+            GetDrawPilePosition() + Vector3.up * 1.5f);
         if(shownDrawPileCount != drawPile.Count)
         {
             shownDrawPileCount = drawPile.Count;
@@ -1108,15 +1140,32 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private Vector3 GetPilePosition(int pileIndex)
     {
-        float x = (pileIndex - (piles.Count - 1) * .5f) * 2;
+        float halfWidth = Camera.main.orthographicSize * Camera.main.aspect;
+        float availableWidth = Mathf.Min(10.5f,
+            Mathf.Max(2, (halfWidth - 1.4f) * 2));
+        float spacing = piles.Count > 1 ?
+            Mathf.Min(2, availableWidth / (piles.Count - 1)) : 0;
+        float x = (pileIndex - (piles.Count - 1) * .5f) * spacing;
         return new Vector3(x, SpeedPileY, 0);
     }
 
     private Vector3 GetHandPosition(int handIndex)
     {
-        float x = -(handSize - 1) * HandSpacing * .5f
-            + handIndex * HandSpacing;
+        float halfWidth = Camera.main.orthographicSize * Camera.main.aspect;
+        float drawPileX = GetDrawPilePosition().x;
+        float halfHandWidth = Mathf.Max(2,
+            Mathf.Min(drawPileX - 1.7f, halfWidth - 2.3f));
+        float spacing = handSize > 1 ?
+            Mathf.Min(HandSpacing, halfHandWidth * 2 / (handSize - 1)) : 0;
+        float x = -(handSize - 1) * spacing * .5f + handIndex * spacing;
         return new Vector3(x, HandY, 0);
+    }
+
+    private Vector3 GetDrawPilePosition()
+    {
+        float halfWidth = Camera.main.orthographicSize * Camera.main.aspect;
+        return new Vector3(Mathf.Min(DrawPileX, halfWidth - 1.2f),
+            DrawPileY, 0);
     }
 
     private int GetEffectiveCardIndex(int pileIndex)

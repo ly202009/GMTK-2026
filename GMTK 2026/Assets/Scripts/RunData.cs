@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class RunData : MonoBehaviour
 {
@@ -16,7 +17,9 @@ public class RunData : MonoBehaviour
     public bool handInvalidGain;
     public int countdown = 120;
     public bool autoDraw;
+    public int round = 1;
     public List<CardData> deck = new();
+    public bool bossRound => round > 0 && round % 3 == 0;
 
     private float countdownTime;
     public float countdownValue => Mathf.Max(0, countdown - countdownTime);
@@ -39,9 +42,21 @@ public class RunData : MonoBehaviour
 
         instance = this;
         DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += HandleSceneLoaded;
         Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         CreateDeck();
         StartCoroutine(CountdownTimer());
+    }
+
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if(scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
+    }
+
+    private void OnDestroy()
+    {
+        if(instance == this)
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     private IEnumerator CountdownTimer()

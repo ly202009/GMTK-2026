@@ -121,8 +121,6 @@ public class Shop : MonoBehaviour
             seals[i] = new GameObject("Seal " + i.ToString());
             seals[i].transform.position = shop.position;
             SpriteRenderer sealRenderer = seals[i].AddComponent<SpriteRenderer>();
-            sealRenderer.transform.SetParent(seals[i].transform, false);
-            sealRenderer.transform.localPosition = new Vector3(0, 0, -0.1f);
             sealRenderer.transform.localScale = new Vector3(4f, 4f, 1);
             sealRenderer.sprite = propertySeals[Properties[shownSeal[i]].property];
             sealRenderer.enabled = true;
@@ -360,7 +358,8 @@ public class Shop : MonoBehaviour
         for(int i = 0; i < Properties.Length; i++)
             if(Properties[i].seal != null)
             {
-                Sprite[] seals = Resources.LoadAll<Sprite>(Properties[i].seal);
+                Sprite[] seals = Resources.LoadAll<Sprite>(
+                    "modifiers/" + Properties[i].seal);
                 if(seals.Length > 0)
                     propertySeals.Add(Properties[i].property, seals[0]);
             }
