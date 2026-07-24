@@ -29,6 +29,8 @@ public class RoundTrackerHUD : MonoBehaviour
                 typeof(Image), typeof(CanvasGroup));
             card.transform.SetParent(trackerRoot, false);
             RectTransform rect = card.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, .5f);
+            rect.anchorMax = new Vector2(0, .5f);
             rect.sizeDelta = new Vector2(116, 52);
             cards.Add(rect);
             Image image = card.GetComponent<Image>();
@@ -69,6 +71,9 @@ public class RoundTrackerHUD : MonoBehaviour
             TMP_Text text = textObject.GetComponent<TMP_Text>();
             text.font = TMP_Settings.defaultFontAsset;
             text.fontSize = 17;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 11;
+            text.fontSizeMax = 17;
             text.fontStyle = FontStyles.Bold;
             text.alignment = TextAlignmentOptions.Center;
             text.characterSpacing = 1;
@@ -84,6 +89,8 @@ public class RoundTrackerHUD : MonoBehaviour
                 arrowObject.transform.SetParent(trackerRoot, false);
                 RectTransform arrowRect =
                     arrowObject.GetComponent<RectTransform>();
+                arrowRect.anchorMin = new Vector2(0, .5f);
+                arrowRect.anchorMax = new Vector2(0, .5f);
                 arrowRect.sizeDelta = new Vector2(26, 52);
                 arrowRect.anchoredPosition = new Vector2(
                     firstPosition + (i + .5f) * spacing, 0);
@@ -140,9 +147,12 @@ public class RoundTrackerHUD : MonoBehaviour
     {
         bool boss = round % 3 == 0;
         bool current = i == 0;
+        string roundType = boss ?
+            RunData.Bosses[RunData.instance.bossOrder[
+                (round / 3 - 1) % RunData.instance.bossOrder.Count]] : "NORMAL";
         texts[i].text = current ?
-            $"NOW  •  R{round}\n{(boss ? "BOSS" : "NORMAL")}" :
-            $"ROUND {round}\n{(boss ? "BOSS" : "NORMAL")}";
+            $"NOW  •  R{round}\n{roundType}" :
+            $"ROUND {round}\n{roundType}";
         images[i].color = boss ?
             current ? new Color(.42f, .045f, .025f, .98f) :
                 new Color(.18f, .025f, .025f, .94f) :

@@ -83,6 +83,7 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private TMP_Text comboLevelText;
     [SerializeField] private RectTransform comboLevelPanel;
     [SerializeField] private CanvasGroup comboLevelGroup;
+    [SerializeField] private TMP_Text bossText;
 
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
@@ -128,6 +129,10 @@ public sealed class DeckGenerator : MonoBehaviour
     private float comboBarPunch;
     private Vector2 comboLevelPosition;
     private float comboLevelPunch;
+    private int boss;
+    private float bossTime;
+    private float bossExtraTime;
+    private Vector2 bossDirection;
 
     private void Awake()
     {
@@ -139,6 +144,23 @@ public sealed class DeckGenerator : MonoBehaviour
         numberOfPiles = RunData.instance.numberOfPiles;
         handSize = RunData.instance.handSize;
         autoDraw = RunData.instance.autoDraw;
+        boss = RunData.instance.currentBoss;
+        bossText.gameObject.SetActive(boss >= 0);
+        if(boss >= 0)
+        {
+            bossText.text = RunData.Bosses[boss]
+                + "\n<size=22>" + RunData.BossDescriptions[boss] + "</size>";
+            bossText.rectTransform.localScale = Vector3.zero;
+        }
+        if(boss == 3) handSize = Mathf.Max(1, handSize - 2);
+        if(boss == 4 || boss == 6)
+            bossDirection = UnityEngine.Random.insideUnitCircle.normalized;
+        if(boss == 6)
+        {
+            bossText.rectTransform.anchorMin = new Vector2(.5f, .5f);
+            bossText.rectTransform.anchorMax = new Vector2(.5f, .5f);
+            bossText.rectTransform.sizeDelta = new Vector2(500, 120);
+        }
         comboPosition = comboPanel.anchoredPosition;
         comboGroup.alpha = 0;
         comboTimerGroup.alpha = 0;
@@ -193,6 +215,9 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandleClicks()
     {
+        if(boss == 6 && pressedCard == null && draggedCard == null
+        && RectTransformUtility.RectangleContainsScreenPoint(
+        bossText.rectTransform, Mouse.current.position.ReadValue())) return;
         if(draggedCard == null && pressedCard == null
         && !Mouse.current.leftButton.wasPressedThisFrame) return;
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -410,6 +435,13 @@ public sealed class DeckGenerator : MonoBehaviour
     private bool CardsWork(GameObject card, int pileIndex)
     {
         GameObject topCard = piles[pileIndex][GetEffectiveCardIndex(pileIndex)];
+        int cardValue = cardData[card].values[0];
+        int topValue = cardData[topCard].values[0];
+
+        if(boss == 0 && cardValue == 4
+        && RunData.instance.countdown % 4 != 0) return false;
+        if(boss == 7 && (cardValue == 1 && topValue == 13
+        || cardValue == 13 && topValue == 1)) return false;
 
         if ((cardData[card].properties & CardData.WildCard) != 0
         || (cardData[topCard].properties & CardData.WildCard) != 0) return true;
@@ -728,6 +760,82 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void Update()
     {
+        bossTime += Time.unscaledDeltaTime;
+        if(boss == 1 && bossTime >= 3)
+        {
+            bossTime = 0;
+            int j = UnityEngine.Random.Range(0, piles.Count);
+            for(int i = 0; i < piles.Count; i++)
+            {
+                int k = (i + j) % piles.Count;
+                if(piles[k].Count == 1 && drawPile.Count == 0) continue;
+                GameObject card = piles[k][piles[k].Count - 1];
+                if(animatingCards.Contains(card)) continue;
+                piles[k].RemoveAt(piles[k].Count - 1);
+                if(piles[k].Count == 0)
+                {
+                    GameObject replacement = drawPile[drawPile.Count - 1];
+                    drawPile.RemoveAt(drawPile.Count - 1);
+                    piles[k].Add(replacement);
+                }
+                cardData.Remove(card);
+                cardFaces.Remove(card);
+                StartCoroutine(WhiskCard(card));
+                cardsChanged = true;
+                break;
+            }
+        }
+        if(boss == 4)
+        {
+            Vector2 mouse = Mouse.current.position.ReadValue()
+                + bossDirection * 90 * Time.unscaledDeltaTime;
+            mouse.x = Mathf.Clamp(mouse.x, 0, Screen.width);
+            mouse.y = Mathf.Clamp(mouse.y, 0, Screen.height);
+            Mouse.current.WarpCursorPosition(mouse);
+        }
+        if(boss == 5 && freezeCountdown <= 0)
+        {
+            bossExtraTime += Time.unscaledDeltaTime
+                * RunData.instance.timerSpeed * .3f;
+            if(bossExtraTime >= 1)
+            {
+                bossExtraTime--;
+                RunData.instance.countdown =
+                    Mathf.Max(0, RunData.instance.countdown - 1);
+            }
+        }
+        if(boss == 6)
+        {
+            RectTransform rect = bossText.rectTransform;
+            RectTransform parent = rect.parent.GetComponent<RectTransform>();
+            Vector2 limit = (parent.rect.size - rect.rect.size) * .5f;
+            rect.anchoredPosition += bossDirection
+                * 320 * Time.unscaledDeltaTime;
+            if(Mathf.Abs(rect.anchoredPosition.x) > limit.x)
+            {
+                bossDirection.x *= -1;
+                rect.anchoredPosition = new Vector2(
+                    Mathf.Clamp(rect.anchoredPosition.x, -limit.x, limit.x),
+                    rect.anchoredPosition.y);
+            }
+            if(Mathf.Abs(rect.anchoredPosition.y) > limit.y)
+            {
+                bossDirection.y *= -1;
+                rect.anchoredPosition = new Vector2(
+                    rect.anchoredPosition.x,
+                    Mathf.Clamp(rect.anchoredPosition.y, -limit.y, limit.y));
+            }
+        }
+        if(boss >= 0)
+        {
+            float pulse = 1 + Mathf.Sin(Time.unscaledTime * 3) * .035f;
+            bossText.rectTransform.localScale = Vector3.Lerp(
+                bossText.rectTransform.localScale, Vector3.one * pulse,
+                1 - Mathf.Exp(-9 * Time.unscaledDeltaTime));
+            bossText.rectTransform.localRotation = Quaternion.Euler(
+                0, 0, Mathf.Sin(Time.unscaledTime * 2.2f) * 1.5f);
+        }
+
         if(combo > 0)
         {
             comboTime -= Time.unscaledDeltaTime;
@@ -892,6 +1000,23 @@ public sealed class DeckGenerator : MonoBehaviour
     private void LateUpdate()
     {
         RenderCards();
+        if(boss < 0) return;
+        bossText.ForceMeshUpdate();
+        TMP_TextInfo info = bossText.textInfo;
+        for(int i = 0; i < info.characterCount; i++)
+        {
+            if(i >= RunData.Bosses[boss].Length) continue;
+            TMP_CharacterInfo character = info.characterInfo[i];
+            if(!character.isVisible) continue;
+            Vector3[] vertices =
+                info.meshInfo[character.materialReferenceIndex].vertices;
+            int j = character.vertexIndex;
+            float x = (vertices[j].x + vertices[j + 2].x) * .5f;
+            Vector3 offset = Vector3.up * (-x * x / 2600
+                + Mathf.Sin(Time.unscaledTime * 2 + i * .4f) * 2);
+            for(int k = 0; k < 4; k++) vertices[j + k] += offset;
+        }
+        bossText.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices);
     }
 
     private void RenderCards()
@@ -972,6 +1097,13 @@ public sealed class DeckGenerator : MonoBehaviour
                         Quaternion.identity;
                 }
                 SetSortingOrder(piles[i][j], j + 10);
+                bool hidden = boss == 2 && Mathf.Repeat(bossTime, 6) > 3;
+                SpriteRenderer[] renderers =
+                    piles[i][j].GetComponentsInChildren<SpriteRenderer>(true);
+                for(int k = 0; k < renderers.Length; k++)
+                    if(hidden) renderers[k].enabled = false;
+                if(!hidden)
+                    piles[i][j].GetComponent<SpriteRenderer>().enabled = true;
                 piles[i][j].GetComponent<Collider2D>().enabled =
                     isTopCard && !animatingCards.Contains(piles[i][j]);
             }
@@ -1014,6 +1146,29 @@ public sealed class DeckGenerator : MonoBehaviour
         drawPileCountText.color = drawPile.Count <= 5 ?
             new Color(1, .45f, .12f) : Color.white;
         drawPileCountText.text = drawPile.Count.ToString();
+    }
+
+    private IEnumerator WhiskCard(GameObject card)
+    {
+        animatingCards.Add(card);
+        SpriteRenderer[] renderers =
+            card.GetComponentsInChildren<SpriteRenderer>(true);
+        for(int i = 0; i < renderers.Length; i++) renderers[i].enabled = true;
+        float time = 0;
+        while(time < .3f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = time / .3f;
+            card.transform.position += new Vector3(3, 5, 0)
+                * Time.unscaledDeltaTime;
+            card.transform.localRotation =
+                Quaternion.Euler(0, 0, amount * 35);
+            for(int i = 0; i < renderers.Length; i++)
+                renderers[i].color = new Color(1, 1, 1, 1 - amount);
+            yield return null;
+        }
+        animatingCards.Remove(card);
+        Destroy(card);
     }
 
     private IEnumerator AnimateCardToPile(GameObject card, int pileIndex)

@@ -20,6 +20,22 @@ public class RunData : MonoBehaviour
         ("INVALID HAND GAIN", 6, null),
         ("AUTO DRAW", 5, null)
     };
+    public static string[] Bosses =
+    {
+        "0100", "OVERFLOW", "BLACK BOX", "TRUNCATE",
+        "STICKY KEYS", "OVERCLOCK", "SCREENSAVER", "UNSIGNED"
+    };
+    public static string[] BossDescriptions =
+    {
+        "4s only play when the timer is divisible by 4",
+        "Every 3s, a pile's top card is whisked away",
+        "The pile cards periodically disappear",
+        "Your hand is two cards smaller",
+        "The cursor is constantly pushed",
+        "The timer drains 30% faster",
+        "A bouncing logo blocks your inputs",
+        "Aces and kings cannot play onto each other"
+    };
 
     public int numberOfPiles = 2;
     public int handSize = 5;
@@ -30,7 +46,9 @@ public class RunData : MonoBehaviour
     public bool handInvalidGain;
     public int countdown = 120;
     public bool autoDraw;
-    public int round = 1;
+    public int round = 3;
+    public List<int> bossOrder = new();
+    public int currentBoss = -1;
     public List<CardData> deck = new();
     public int[] powerupLevels = new int[8];
     public bool bossRound => round > 0 && round % 3 == 0;
@@ -66,12 +84,20 @@ public class RunData : MonoBehaviour
             Mathf.Max(0, hud.transform.childCount - 2));
         powerupHud.AddComponent<PowerupHUD>();
         CreateDeck();
+        for(int i = 0; i < Bosses.Length; i++) bossOrder.Add(i);
+        for(int i = bossOrder.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (bossOrder[i], bossOrder[j]) = (bossOrder[j], bossOrder[i]);
+        }
         StartCoroutine(CountdownTimer());
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if(scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
+        currentBoss = bossRound ?
+            bossOrder[(round / 3 - 1) % bossOrder.Count] : -1;
     }
 
     private void OnDestroy()
