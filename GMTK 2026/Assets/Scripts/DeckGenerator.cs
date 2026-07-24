@@ -267,6 +267,7 @@ public sealed class DeckGenerator : MonoBehaviour
             else if(Mouse.current.leftButton.wasReleasedThisFrame)
             {
                 selectedHandCard = pressedCard;
+                cardClickPops[pressedCard] = .13f;
                 pressedCard = null;
                 return;
             }
@@ -312,7 +313,7 @@ public sealed class DeckGenerator : MonoBehaviour
         {
             pressedCard = clickedCard;
             pressedPosition = mousePosition;
-            cardClickPops[clickedCard] = .16f;
+            cardClickPops.Remove(clickedCard);
             return;
         }
 
@@ -1084,8 +1085,10 @@ public sealed class DeckGenerator : MonoBehaviour
                 handPosition.x += Mathf.Cos(idle) * .012f;
                 handPosition.y += Mathf.Sin(idle) * .05f;
                 handPosition.y -= Mathf.Abs(fan) * .018f;
-                if(handCards[i] == selectedHandCard
-                || handCards[i] == pressedCard)
+                if(handCards[i] == pressedCard)
+                    handPosition.y += .53f
+                        + Mathf.Sin(Time.time * 5) * .008f;
+                else if(handCards[i] == selectedHandCard)
                     handPosition.y += .35f
                         + Mathf.Sin(Time.time * 5) * .008f;
                 else if(hoveredCollider != null
@@ -1095,8 +1098,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 if(cardClickPops.TryGetValue(handCards[i], out float popTime))
                 {
                     popTime = Mathf.Max(0, popTime - Time.deltaTime);
-                    float clickAmount = 1 - popTime / .16f;
-                    handPosition.y += Mathf.Sin(clickAmount * Mathf.PI) * .18f;
+                    handPosition.y += popTime / .13f * .18f;
                     if(popTime == 0) cardClickPops.Remove(handCards[i]);
                     else cardClickPops[handCards[i]] = popTime;
                 }

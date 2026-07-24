@@ -42,6 +42,7 @@ public class Shop : MonoBehaviour
     private GameObject applyingCard;
 
     private int cardSelected = -1;
+    private int heldCard = -1;
     private int sealSelected = -1;
     private int rerolls;
     private static (int property, string seal, Vector3 sealPosition, int cost)[] Properties =
@@ -102,11 +103,13 @@ public class Shop : MonoBehaviour
     void ShowCards()
     {
         cardSelected = -1;
+        heldCard = -1;
         sealSelected = -1;
 
         DeckGenerator.Shuffle(RunData.instance.deck);
         for (int i = 0; i < numberOfShownCards; i++)
         {
+            cardPops[i] = 0;
             cardPositions[i] = new Vector3(
                 shownCardSpacing * (i - numberOfShownCards / 2) + 1,
                 shownCardPos, 0);
@@ -157,6 +160,11 @@ public class Shop : MonoBehaviour
     }
     private void ChooseCards()
     {
+        if(heldCard != -1 && !Mouse.current.leftButton.isPressed)
+        {
+            cardPops[heldCard] = .13f;
+            heldCard = -1;
+        }
         if(applyingCard != null) return;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D hoveredCollider = Physics2D.OverlapPoint(mousePos);
@@ -166,7 +174,8 @@ public class Shop : MonoBehaviour
             if(cards.Contains(hoveredCollider.gameObject))
             {
                 cardSelected = Array.IndexOf(cards, hoveredCollider.gameObject);
-                cardPops[cardSelected] = .16f;
+                heldCard = cardSelected;
+                cardPops[cardSelected] = 0;
             }
             if(seals.Contains(hoveredCollider.gameObject))
             {
@@ -181,11 +190,11 @@ public class Shop : MonoBehaviour
         {
             if(cards[i] == null || cards[i] == applyingCard
             || movingThings.Contains(cards[i])) continue;
-            float lift = i == cardSelected ? .28f :
+            float lift = i == heldCard ? .46f :
+                i == cardSelected ? .28f :
                 hoveredCollider != null && hoveredCollider.gameObject == cards[i] ? .08f : 0;
             cardPops[i] = Mathf.Max(0, cardPops[i] - Time.deltaTime);
-            float clickAmount = 1 - cardPops[i] / .16f;
-            lift += Mathf.Sin(clickAmount * Mathf.PI) * .18f;
+            lift += cardPops[i] / .13f * .18f;
             float idle = Time.time * 1.8f + i * 1.35f;
             cards[i].transform.position = Vector3.Lerp(cards[i].transform.position,
                 cardPositions[i] + new Vector3(Mathf.Cos(idle) * .012f,
@@ -241,6 +250,8 @@ public class Shop : MonoBehaviour
         int property = Properties[shownSeal[sealSelect]].property;
         int modifierCost = Properties[shownSeal[sealSelect]].cost;
         applyingCard = cards[cardSelect];
+        heldCard = -1;
+        cardPops[cardSelect] = 0;
         if((shownCards[cardSelect].properties & property) != 0
         || RunData.instance.countdown < modifierCost || !isAvailable[sealSelect])
         {

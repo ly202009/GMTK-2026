@@ -17,6 +17,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     private float appearTime;
     private float appearDelay;
     private float shake;
+    private float releaseLift;
     private bool hovered;
     private bool pressed;
     private bool entrancePlayed;
@@ -54,7 +55,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
             hovered = false;
             pressed = false;
             targetScale = 1;
-            targetLift = 0;
+            if(releaseLift <= 0) targetLift = 0;
         }
 
         if(appearDelay > 0)
@@ -72,6 +73,13 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         shake = Mathf.Max(0, shake - Time.unscaledDeltaTime);
         float shakeOffset = Mathf.Sin((.22f - shake) * 65) * 10
             * (shake / .22f);
+        if(releaseLift > 0)
+        {
+            releaseLift = Mathf.Max(0,
+                releaseLift - Time.unscaledDeltaTime);
+            targetLift = Mathf.Lerp(hovered ? 4 : 0,
+                14, releaseLift / .14f);
+        }
         Vector3 scale = normalScale
             * ((targetScale + punch + breathe) * appear);
         rect.localScale = Vector3.Lerp(rect.localScale, scale,
@@ -102,6 +110,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     {
         if(!button.interactable) return;
         pressed = true;
+        releaseLift = 0;
         targetScale = holdUpOnPress ? 1.035f : .965f;
         targetLift = holdUpOnPress ? 14 : -1;
         if(holdUpOnPress) punch = .075f;
@@ -112,7 +121,8 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         if(!button.interactable) return;
         pressed = false;
         targetScale = hovered ? 1.045f : 1;
-        targetLift = hovered ? 4 : 0;
+        if(holdUpOnPress) releaseLift = .14f;
+        else targetLift = hovered ? 4 : 0;
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -143,6 +153,8 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     {
         if(rect == null) return;
         pressed = false;
+        releaseLift = 0;
+        targetLift = 0;
         rect.localScale = normalScale;
         rect.anchoredPosition = normalPosition;
     }
