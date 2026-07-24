@@ -161,7 +161,9 @@ public class Shop : MonoBehaviour
         CardData thisCard = shownCards[cardSelect];
         thisCard.properties = shownCards[cardSelect].properties | Properties[shownSeal[sealSelect]].property;
         RunData.instance.deck[cardSelect] = thisCard;
+        shownCards[cardSelect] = thisCard;
         isAvailable[sealSelect] = false;
+        SetCardMaterial(cards[cardSelect], thisCard);
         SpriteRenderer[] sealRenderers = cards[cardSelect].GetComponentsInChildren<SpriteRenderer>();
         foreach (SpriteRenderer sealRenderer in sealRenderers)
         {
@@ -193,8 +195,11 @@ public class Shop : MonoBehaviour
             cardRenderer.sprite = cardSprites[i];
             break;
         }
+        SetCardMaterial(card, cardData);
         for(int i = 0; i < Properties.Length; i++)
         {
+            if(Properties[i].property == CardData.Transparent
+            || Properties[i].property == CardData.WildCard) continue;
             if(Properties[i].seal == null
             || !propertySeals.ContainsKey(Properties[i].property)) continue;
             GameObject seal = new GameObject($"Seal {Properties[i].property}");
@@ -211,6 +216,17 @@ public class Shop : MonoBehaviour
         card.SetActive(true);
         return card;
     }
+
+    private void SetCardMaterial(GameObject card, CardData data)
+    {
+        int transparentIndex =
+            (data.properties & CardData.Transparent) / CardData.Transparent;
+        int wildCardIndex =
+            (data.properties & CardData.WildCard) / CardData.WildCard;
+        card.GetComponent<SpriteRenderer>().sharedMaterial =
+            cardMaterials[transparentIndex + wildCardIndex * 2];
+    }
+
     void Start()
     {
         shownCards = new CardData[numberOfShownCards];

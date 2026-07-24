@@ -804,7 +804,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d77d42ade5cb4c0ea71b7716b25b7c0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeckGenerator
-  cardTemplate: {fileID: 0}
+  cardTemplate: {fileID: 1194196875}
   transparentCardMaterial: {fileID: 2100000, guid: b226c79df8e54ad8b221b3cdf117552d, type: 2}
   wildCardMaterial: {fileID: 2100000, guid: d448e9bf10a74cfac443d5efa339774f, type: 2}
   transparentWildCardMaterial: {fileID: 2100000, guid: e559fac021b84dfbd554e6fab44a885a, type: 2}
