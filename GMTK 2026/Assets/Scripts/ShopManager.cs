@@ -6,6 +6,8 @@ using System.Data;
 using UnityEngine.InputSystem;
 using System.Linq;
 using System;
+using TMPro;
+using UnityEngine.UI;
 
 public class Shop : MonoBehaviour
 {
@@ -19,8 +21,9 @@ public class Shop : MonoBehaviour
     [SerializeField] private Material transparentWildCardMaterial;
     [SerializeField] private int numberOfShownCards;
     [SerializeField] private int numberOfShownSeals;
-    [SerializeField] private int[] cost;
     [SerializeField] private float dragThreshold;
+    [SerializeField] private Button rerollButton;
+    [SerializeField] private TMP_Text rerollText;
     private Material[] cardMaterials;
     private Sprite[] cardSprites;
     private Sprite cardBack;
@@ -33,31 +36,35 @@ public class Shop : MonoBehaviour
     Vector3[] sealPositions;
     GameObject[] seals;
     bool[] isAvailable;
+    private HashSet<GameObject> movingThings = new();
+    private GameObject applyingCard;
 
     private int cardSelected = -1;
     private int sealSelected = -1;
-    private bool canDrag = false;
-    private bool isDragging = false;
-    private static (int property, string seal, Vector3 sealPosition)[] Properties =
+    private int rerolls;
+    private static (int property, string seal, Vector3 sealPosition, int cost)[] Properties =
     {
-        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f)),
-        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f)),
-        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f)),
-        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f)),
-        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f))
+        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 6),
+        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 15),
+        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 10),
+        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 18),
+        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 8)
     };
 
     private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end, float duration)
     {
+        movingThings.Add(thing);
         for (float t = 0.0f; t <= duration; t += Time.deltaTime)
         {
             thing.transform.position = Vector3.Lerp(start, end, Mathf.Sqrt(t/duration));
             yield return null;
         }
         thing.transform.position = end;
+        movingThings.Remove(thing);
     }
     private IEnumerator ShakeCard(GameObject thing, float duration)
     {
+        movingThings.Add(thing);
         int track = 0;
         for (float t = 0; t < duration; t += Time.deltaTime)
         {
@@ -71,6 +78,15 @@ public class Shop : MonoBehaviour
             yield return null;
         }
         thing.transform.localRotation = Quaternion.identity;
+        movingThings.Remove(thing);
+    }
+
+    private IEnumerator JumpThing(GameObject thing, Vector3 heldPosition)
+    {
+        yield return StartCoroutine(MoveThing(thing, thing.transform.position,
+            heldPosition + new Vector3(0, .18f, 0), .06f));
+        yield return StartCoroutine(MoveThing(thing, thing.transform.position,
+            heldPosition, .08f));
     }
 
     void ShowCards()
@@ -81,7 +97,9 @@ public class Shop : MonoBehaviour
         DeckGenerator.Shuffle(RunData.instance.deck);
         for (int i = 0; i < numberOfShownCards; i++)
         {
-            cardPositions[i] = new Vector3(shownCardSpacing*(i-numberOfShownCards/2), shownCardPos, 0);
+            cardPositions[i] = new Vector3(
+                shownCardSpacing * (i - numberOfShownCards / 2) + 1,
+                shownCardPos, 0);
             shownCards[i] = RunData.instance.deck[i];
             cards[i] = DrawCard(shownCards[i]);
             cards[i].transform.position = shop.position;
@@ -90,7 +108,9 @@ public class Shop : MonoBehaviour
         }
         for (int i = 0; i < numberOfShownSeals; i++)
         {
-            sealPositions[i] = new Vector3(shownPowerSpacing*(i-numberOfShownSeals/2), shownPowerPos, 0);
+            sealPositions[i] = new Vector3(
+                shownPowerSpacing * (i - numberOfShownSeals / 2) + 1,
+                shownPowerPos, 0);
             shownSeal[i] = UnityEngine.Random.Range(0, 5);
 
             seals[i] = new GameObject("Seal " + i.ToString());
@@ -102,6 +122,18 @@ public class Shop : MonoBehaviour
             sealRenderer.sprite = propertySeals[Properties[shownSeal[i]].property];
             sealRenderer.enabled = true;
             seals[i].AddComponent<BoxCollider2D>();
+
+            GameObject costObject = new GameObject("Cost");
+            costObject.transform.SetParent(seals[i].transform, false);
+            costObject.transform.localPosition = new Vector3(0, -.16f, -.01f);
+            costObject.transform.localScale = new Vector3(.15f, .15f, 1);
+            TextMeshPro costText = costObject.AddComponent<TextMeshPro>();
+            costText.text = $"-{Properties[shownSeal[i]].cost}s";
+            costText.fontSize = 6;
+            costText.fontStyle = FontStyles.Bold;
+            costText.alignment = TextAlignmentOptions.Center;
+            costText.color = new Color(1, .05f, .05f);
+            costText.sortingOrder = sealRenderer.sortingOrder + 1;
             isAvailable[i] = true;
         }
         for (int i = 0; i < numberOfShownCards; i++)
@@ -116,50 +148,91 @@ public class Shop : MonoBehaviour
     private void ChooseCards()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-        Collider2D clickedCollider = Physics2D.OverlapPoint(mousePos);
+        Collider2D hoveredCollider = Physics2D.OverlapPoint(mousePos);
 
-        if (Mouse.current.leftButton.wasPressedThisFrame && clickedCollider != null)
+        if (Mouse.current.leftButton.wasPressedThisFrame && hoveredCollider != null)
         {
-            if (cards.Contains(clickedCollider.gameObject))
+            if(cards.Contains(hoveredCollider.gameObject))
             {
-                int clickedCard = Array.IndexOf(cards, clickedCollider.gameObject);
-                if (cardSelected != -1 && cardSelected != clickedCard)
-                {
-                    StartCoroutine(MoveThing(cards[cardSelected], cardPositions[cardSelected]+new Vector3(0, 0.2f, 0), cardPositions[cardSelected], 0.1f));
-                    StartCoroutine(MoveThing(cards[clickedCard], cardPositions[clickedCard], cardPositions[clickedCard]+new Vector3(0, 0.2f, 0), 0.1f));
-                } else if (cardSelected == -1)
-                {
-                    StartCoroutine(MoveThing(cards[clickedCard], cardPositions[clickedCard], cardPositions[clickedCard]+new Vector3(0, 0.2f, 0), 0.1f));
-                }
-                cardSelected = clickedCard;
+                cardSelected = Array.IndexOf(cards, hoveredCollider.gameObject);
+                if(!movingThings.Contains(cards[cardSelected]))
+                    StartCoroutine(JumpThing(cards[cardSelected],
+                        cardPositions[cardSelected] + new Vector3(0, .28f, 0)));
             }
-            if (seals.Contains(clickedCollider.gameObject))
+            if(seals.Contains(hoveredCollider.gameObject))
             {
-                canDrag = true;
-                int clickedPower = Array.IndexOf(seals, clickedCollider.gameObject);
-                if (sealSelected != -1 && sealSelected != clickedPower)
-                {
-                    StartCoroutine(MoveThing(seals[sealSelected], sealPositions[sealSelected]+new Vector3(0, 0.2f, 0), sealPositions[sealSelected], 0.1f));
-                    StartCoroutine(MoveThing(seals[clickedPower], sealPositions[clickedPower], sealPositions[clickedPower]+new Vector3(0, 0.2f, 0), 0.1f));
-                }
-                sealSelected = clickedPower;
-            }
-        } else if (Mouse.current.leftButton.wasReleasedThisFrame)
-        {
-            if (canDrag)
-            {
-                canDrag = false;
+                sealSelected = Array.IndexOf(seals, hoveredCollider.gameObject);
+                if(!movingThings.Contains(seals[sealSelected]))
+                    StartCoroutine(JumpThing(seals[sealSelected],
+                        sealPositions[sealSelected] + new Vector3(0, .28f, 0)));
             }
         }
 
-        
-    } 
+        for(int i = 0; i < cards.Length; i++)
+        {
+            if(cards[i] == null || cards[i] == applyingCard
+            || movingThings.Contains(cards[i])) continue;
+            float lift = i == cardSelected ? .28f :
+                hoveredCollider != null && hoveredCollider.gameObject == cards[i] ? .08f : 0;
+            cards[i].transform.position = Vector3.Lerp(cards[i].transform.position,
+                cardPositions[i] + new Vector3(0, lift, 0),
+                1 - Mathf.Exp(-20 * Time.deltaTime));
+            bool tilted = hoveredCollider != null
+                && hoveredCollider.gameObject == cards[i];
+            Quaternion rotation = tilted ?
+                GetPressureRotation(cards[i], mousePos) : Quaternion.identity;
+            cards[i].transform.rotation = Quaternion.Lerp(
+                cards[i].transform.rotation, rotation,
+                1 - Mathf.Exp(-15 * Time.deltaTime));
+        }
+
+        for(int i = 0; i < seals.Length; i++)
+        {
+            if(seals[i] == null || !seals[i].activeSelf
+            || movingThings.Contains(seals[i])) continue;
+            float lift = i == sealSelected ? .28f :
+                hoveredCollider != null && hoveredCollider.gameObject == seals[i] ? .08f : 0;
+            seals[i].transform.position = Vector3.Lerp(seals[i].transform.position,
+                sealPositions[i] + new Vector3(0, lift, 0),
+                1 - Mathf.Exp(-20 * Time.deltaTime));
+            bool tilted = hoveredCollider != null
+                && hoveredCollider.gameObject == seals[i];
+            Quaternion rotation = tilted ?
+                GetPressureRotation(seals[i], mousePos) : Quaternion.identity;
+            seals[i].transform.rotation = Quaternion.Lerp(
+                seals[i].transform.rotation, rotation,
+                1 - Mathf.Exp(-15 * Time.deltaTime));
+        }
+    }
+
+    private Quaternion GetPressureRotation(GameObject thing, Vector2 mousePosition)
+    {
+        BoxCollider2D box = thing.GetComponent<BoxCollider2D>();
+        float width = box.size.x * Mathf.Abs(thing.transform.lossyScale.x);
+        float height = box.size.y * Mathf.Abs(thing.transform.lossyScale.y);
+        float x = Mathf.Clamp((mousePosition.x - thing.transform.position.x)
+            / (width * .5f), -1, 1);
+        float y = Mathf.Clamp((mousePosition.y - thing.transform.position.y)
+            / (height * .5f), -1, 1);
+        return Quaternion.Euler(y * 14, x * -14, 0);
+    }
+
     private IEnumerator ApplySealToCard()
     {
         int cardSelect = cardSelected;
         int sealSelect = sealSelected;
+        int property = Properties[shownSeal[sealSelect]].property;
+        int modifierCost = Properties[shownSeal[sealSelect]].cost;
+        if((shownCards[cardSelect].properties & property) != 0
+        || RunData.instance.countdown < modifierCost)
+        {
+            yield return StartCoroutine(ShakeCard(seals[sealSelect], 0.2f));
+            yield break;
+        }
+
         CardData thisCard = shownCards[cardSelect];
-        thisCard.properties = shownCards[cardSelect].properties | Properties[shownSeal[sealSelect]].property;
+        thisCard.properties = shownCards[cardSelect].properties | property;
+        RunData.instance.countdown -= modifierCost;
         RunData.instance.deck[cardSelect] = thisCard;
         shownCards[cardSelect] = thisCard;
         isAvailable[sealSelect] = false;
@@ -175,9 +248,11 @@ public class Shop : MonoBehaviour
 
         seals[sealSelect].SetActive(false);
 
+        applyingCard = cards[cardSelect];
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, new Vector3(0, 0, 0), 0.1f));
         yield return StartCoroutine(ShakeCard(cards[cardSelect], 0.2f)); 
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, cardPositions[cardSelect], 0.1f));
+        applyingCard = null;
 
         
     }
@@ -227,6 +302,22 @@ public class Shop : MonoBehaviour
             cardMaterials[transparentIndex + wildCardIndex * 2];
     }
 
+    private void Reroll()
+    {
+        int rerollCost = 3 + rerolls * 2;
+        if(RunData.instance.countdown < rerollCost
+        || movingThings.Count > 0 || applyingCard != null) return;
+
+        RunData.instance.countdown -= rerollCost;
+        rerolls++;
+        for(int i = 0; i < cards.Length; i++)
+            if(cards[i] != null) Destroy(cards[i]);
+        for(int i = 0; i < seals.Length; i++)
+            if(seals[i] != null) Destroy(seals[i]);
+        movingThings.Clear();
+        ShowCards();
+    }
+
     void Start()
     {
         shownCards = new CardData[numberOfShownCards];
@@ -257,12 +348,17 @@ public class Shop : MonoBehaviour
         cardTemplate.SetActive(false);
 
         shop = GetComponent<Transform>();
+        rerollButton.onClick.AddListener(Reroll);
         ShowCards();
 
         
     }
     void Update()
     {
+        int rerollCost = 3 + rerolls * 2;
+        rerollText.text = $"REROLL\n-{rerollCost}s";
+        rerollButton.interactable = RunData.instance.countdown >= rerollCost
+            && movingThings.Count == 0 && applyingCard == null;
         ChooseCards();
         if (cardSelected != -1 && sealSelected != -1)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -36,6 +37,16 @@ public class RunData : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
         CreateDeck();
+        StartCoroutine(CountdownTimer());
+    }
+
+    private IEnumerator CountdownTimer()
+    {
+        while(true)
+        {
+            yield return new WaitForSecondsRealtime(1);
+            if(countdown > 0) countdown--;
+        }
     }
 
     private void CreateDeck()
