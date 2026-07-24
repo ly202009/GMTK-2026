@@ -36,16 +36,27 @@ public class RunData : MonoBehaviour
 
         instance = this;
         DontDestroyOnLoad(gameObject);
+        Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         CreateDeck();
         StartCoroutine(CountdownTimer());
     }
 
     private IEnumerator CountdownTimer()
     {
+        float time = 0;
         while(true)
         {
-            yield return new WaitForSecondsRealtime(1);
-            if(countdown > 0) countdown--;
+            yield return null;
+            if(countdown <= 0)
+            {
+                time = 0;
+                continue;
+            }
+
+            time += Time.unscaledDeltaTime * timerSpeed;
+            if(time < 1) continue;
+            time -= 1;
+            countdown--;
         }
     }
 
