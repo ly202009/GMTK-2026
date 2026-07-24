@@ -45,11 +45,11 @@ public class Shop : MonoBehaviour
     private int rerolls;
     private static (int property, string seal, Vector3 sealPosition, int cost)[] Properties =
     {
-        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 3),
-        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 5),
-        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 7),
-        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 8),
-        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 3)
+        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 1),
+        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 3),
+        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 2),
+        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 2),
+        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 1)
     };
 
     private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end,
