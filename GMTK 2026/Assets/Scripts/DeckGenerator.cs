@@ -467,18 +467,19 @@ public sealed class DeckGenerator : MonoBehaviour
         {
             if(cardObj == null) continue;
             for(int i = 0; i < piles.Count; i++)
-                if(CardsWork(cardObj, i)) return true;
+                if(CardsWork(cardObj, i, true)) return true;
         }
         return false;
     }
 
-    private bool CardsWork(GameObject card, int pileIndex)
+    private bool CardsWork(GameObject card, int pileIndex,
+        bool ignore0100 = false)
     {
         GameObject topCard = piles[pileIndex][GetEffectiveCardIndex(pileIndex)];
         int cardValue = cardData[card].values[0];
         int topValue = cardData[topCard].values[0];
 
-        if(boss == 0 && cardValue == 4
+        if(!ignore0100 && boss == 0 && cardValue == 4
         && RunData.instance.countdown % 4 != 0) return false;
         if(boss == 7 && (cardValue == 1 && topValue == 13
         || cardValue == 13 && topValue == 1)) return false;
@@ -573,7 +574,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 foreach(GameObject handCard in handCards)
                 {
                     if(handCard == null) continue;
-                    if(CardsWork(handCard, i))
+                    if(CardsWork(handCard, i, true))
                     {
                         foundPlayableTop = true;
                         break;
