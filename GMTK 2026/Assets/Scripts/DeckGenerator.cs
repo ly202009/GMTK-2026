@@ -52,6 +52,8 @@ public struct CardData
 
 public sealed class DeckGenerator : MonoBehaviour
 {
+    public static DeckGenerator instance;
+
     private static (int property, string seal, Vector3 sealPosition)[] Properties =
     {
         (CardData.Transparent, null, Vector3.zero),
@@ -71,8 +73,6 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material transparentCardMaterial;
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
-    [SerializeField] private TMP_Text powerupText;
-    [SerializeField] private RectTransform powerupPanel;
     [SerializeField] private TMP_Text drawPileCountText;
     [SerializeField] private TMP_Text comboText;
     [SerializeField] private RectTransform comboPanel;
@@ -129,12 +129,16 @@ public sealed class DeckGenerator : MonoBehaviour
     private Vector2 comboLevelPosition;
     private float comboLevelPunch;
 
+    private void Awake()
+    {
+        instance = this;
+    }
+
     private void Start()
     {
         numberOfPiles = RunData.instance.numberOfPiles;
         handSize = RunData.instance.handSize;
         autoDraw = RunData.instance.autoDraw;
-        UpdatePowerupUI();
         comboPosition = comboPanel.anchoredPosition;
         comboGroup.alpha = 0;
         comboTimerGroup.alpha = 0;
@@ -744,6 +748,7 @@ public sealed class DeckGenerator : MonoBehaviour
                     comboTime = 0;
                     comboStepWindow = comboWindow;
                     comboHistory.Clear();
+                    comboFractionalTime = 0;
                 }
 
                 if(comboAnimation != null) StopCoroutine(comboAnimation);
@@ -848,35 +853,38 @@ public sealed class DeckGenerator : MonoBehaviour
                 freezeCountdown - Time.deltaTime);
 
         RunData.instance.SetTimerFrozen(freezeCountdown > 0);
-        UpdatePowerupUI();
     }
 
-    private void UpdatePowerupUI()
+    public bool PowerupUsed(int power)
     {
-        List<string> lines = new();
-        AddPowerupLine(lines, RunData.instance.allowSuitMatching, "1",
-            "Suit Matching", usedSuitMatching, suitMatchingCountdown);
-        AddPowerupLine(lines, RunData.instance.allowDoubles, "2",
-            "Doubles", usedDoubles, doublesCountdown);
-        AddPowerupLine(lines, RunData.instance.allowFreeze, "3",
-            "Freeze", usedFreeze, freezeCountdown);
-
-        powerupText.text = string.Join("\n", lines);
-        powerupPanel.sizeDelta = new Vector2(520, lines.Count * 40 + 20);
+        if(power == 2) return usedDoubles;
+        if(power == 4) return usedSuitMatching;
+        if(power == 5) return usedFreeze;
+        return false;
     }
 
-    private void AddPowerupLine(List<string> lines, bool allowed, string key,
-        string name, bool used, float countdown)
+    public float PowerupCountdown(int power)
     {
-        if(!allowed) return;
-        string status = !used ? "<color=#6CFF72>READY</color>" :
-            countdown > 0 ? $"<color=#FFE066>{countdown:0.0}s</color>" :
-            "<color=#888888>USED</color>";
-        lines.Add($"[{key}] {name}  -  {status}");
+        if(power == 2) return doublesCountdown;
+        if(power == 4) return suitMatchingCountdown;
+        if(power == 5) return freezeCountdown;
+        return 0;
+    }
+
+    public void RemovePowerup(int power)
+    {
+        if(power == 2) doublesCountdown = 0;
+        if(power == 4) suitMatchingCountdown = 0;
+        if(power == 5)
+        {
+            freezeCountdown = 0;
+            RunData.instance.SetTimerFrozen(false);
+        }
     }
 
     private void OnDestroy()
     {
+        if(instance == this) instance = null;
         if(RunData.instance != null)
             RunData.instance.SetTimerFrozen(false);
     }

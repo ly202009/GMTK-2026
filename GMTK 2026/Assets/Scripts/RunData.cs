@@ -1,12 +1,25 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class RunData : MonoBehaviour
 {
     public static RunData instance;
+    public static (string name, float secondsSaved, string sprite)[] Powerups =
+    {
+        ("EXTRA PILE", 14, "Extra Playable Stacks"),
+        ("BIGGER HAND", 10, null),
+        ("ALLOW DOUBLES", 6, "Doubles Powerup"),
+        ("SLOW TIMER", 9, "Time Slow Powerup"),
+        ("SUIT MATCHING", 7, "Matching suits Powerup"),
+        ("ALLOW FREEZE", 8, "Freeze Powerup"),
+        ("INVALID HAND GAIN", 6, null),
+        ("AUTO DRAW", 5, null)
+    };
 
     public int numberOfPiles = 2;
     public int handSize = 5;
@@ -19,6 +32,7 @@ public class RunData : MonoBehaviour
     public bool autoDraw;
     public int round = 1;
     public List<CardData> deck = new();
+    public int[] powerupLevels = new int[8];
     public bool bossRound => round > 0 && round % 3 == 0;
 
     private float countdownTime;
@@ -44,7 +58,13 @@ public class RunData : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += HandleSceneLoaded;
-        Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
+        GameObject hud = Instantiate(
+            Resources.Load<GameObject>("CountdownHUD"), transform);
+        GameObject powerupHud = Instantiate(
+            Resources.Load<GameObject>("PowerupHUD"), hud.transform);
+        powerupHud.transform.SetSiblingIndex(
+            Mathf.Max(0, hud.transform.childCount - 2));
+        powerupHud.AddComponent<PowerupHUD>();
         CreateDeck();
         StartCoroutine(CountdownTimer());
     }
@@ -84,6 +104,62 @@ public class RunData : MonoBehaviour
         timerFrozen = frozen;
     }
 
+    public static int PowerupCost(int power)
+    {
+        return Mathf.CeilToInt(Powerups[power].secondsSaved * 3);
+    }
+
+    public int GetPowerupLevel(int power)
+    {
+        if(powerupLevels[power] > 0) return powerupLevels[power];
+        if(power == 0) return Mathf.Max(0, numberOfPiles - 2);
+        if(power == 1) return Mathf.Max(0, handSize - 5);
+        if(power == 2) return allowDoubles ? 1 : 0;
+        if(power == 3 && timerSpeed < .99f)
+            return Mathf.Max(1, Mathf.RoundToInt(
+                Mathf.Log(timerSpeed) / Mathf.Log(.7f)));
+        if(power == 4) return allowSuitMatching ? 1 : 0;
+        if(power == 5) return allowFreeze ? 1 : 0;
+        if(power == 6) return handInvalidGain ? 1 : 0;
+        if(power == 7) return autoDraw ? 1 : 0;
+        return 0;
+    }
+
+    public void AddPowerup(int power)
+    {
+        int level = GetPowerupLevel(power) + 1;
+        powerupLevels[power] = level;
+        if(power == 0) numberOfPiles = 2 + level;
+        if(power == 1) handSize = 5 + level;
+        if(power == 2) allowDoubles = true;
+        if(power == 3) timerSpeed = Mathf.Pow(.7f, level);
+        if(power == 4) allowSuitMatching = true;
+        if(power == 5) allowFreeze = true;
+        if(power == 6) handInvalidGain = true;
+        if(power == 7) autoDraw = true;
+    }
+
+    public int SellPowerup(int power)
+    {
+        int level = GetPowerupLevel(power);
+        if(level <= 0) return 0;
+
+        level--;
+        powerupLevels[power] = level;
+        if(power == 0) numberOfPiles = 2 + level;
+        if(power == 1) handSize = 5 + level;
+        if(power == 2) allowDoubles = level > 0;
+        if(power == 3) timerSpeed = Mathf.Pow(.7f, level);
+        if(power == 4) allowSuitMatching = level > 0;
+        if(power == 5) allowFreeze = level > 0;
+        if(power == 6) handInvalidGain = level > 0;
+        if(power == 7) autoDraw = level > 0;
+
+        int refund = Mathf.RoundToInt(PowerupCost(power) * .7f);
+        countdown += refund;
+        return refund;
+    }
+
     private void CreateDeck()
     {
         if(deck.Count > 0) return;
@@ -103,5 +179,137 @@ public class RunData : MonoBehaviour
                     properties = properties
                 });
             }
+    }
+}
+
+public class PowerupHUD : MonoBehaviour
+{
+    private GameObject[] entries = new GameObject[8];
+    private Image[] icons = new Image[8];
+    private Image[] cooldownFills = new Image[8];
+    private TMP_Text[] statusTexts = new TMP_Text[8];
+    private TMP_Text[] sellTexts = new TMP_Text[8];
+    private AnimatedButton[] entryAnimations = new AnimatedButton[8];
+    private int selectedPower = -1;
+    private float selectedTime;
+
+    private void Start()
+    {
+        RectTransform listRect = transform.Find("Powerup List")
+            .GetComponent<RectTransform>();
+        Button entryTemplate = listRect.Find("Powerup Entry Template")
+            .GetComponent<Button>();
+        entryTemplate.gameObject.SetActive(false);
+
+        Sprite fallbackSprite =
+            Resources.LoadAll<Sprite>("Powerups/Extra Playable Stacks")[0];
+
+        for(int i = 0; i < entries.Length; i++)
+        {
+            int j = i;
+            entries[i] = Instantiate(entryTemplate, listRect).gameObject;
+            entries[i].name = RunData.Powerups[i].name;
+            RectTransform rect = entries[i].GetComponent<RectTransform>();
+            Button button = entries[i].GetComponent<Button>();
+            button.onClick.AddListener(() => ClickPowerup(j));
+            entryAnimations[i] =
+                entries[i].GetComponent<AnimatedButton>();
+            icons[i] = entries[i].transform.Find("Icon")
+                .GetComponent<Image>();
+            Sprite[] sprites = RunData.Powerups[i].sprite == null ?
+                new Sprite[0] : Resources.LoadAll<Sprite>(
+                    "Powerups/" + RunData.Powerups[i].sprite);
+            icons[i].sprite = sprites.Length > 0 ?
+                sprites[0] : fallbackSprite;
+            cooldownFills[i] = entries[i].transform.Find("Cooldown")
+                .GetComponent<Image>();
+            statusTexts[i] = entries[i].transform.Find("Status")
+                .GetComponent<TMP_Text>();
+            sellTexts[i] = entries[i].transform.Find("Sell")
+                .GetComponent<TMP_Text>();
+            rect.anchoredPosition = Vector2.zero;
+        }
+    }
+
+    private void ClickPowerup(int power)
+    {
+        if(selectedPower != power)
+        {
+            selectedPower = power;
+            selectedTime = 3;
+            return;
+        }
+
+        int refund = RunData.instance.SellPowerup(power);
+        if(refund > 0 && DeckGenerator.instance != null)
+            DeckGenerator.instance.RemovePowerup(power);
+        selectedPower = -1;
+    }
+
+    private void Update()
+    {
+        if(RunData.instance == null) return;
+        if(selectedTime > 0)
+            selectedTime -= Time.unscaledDeltaTime;
+        else
+            selectedPower = -1;
+
+        int j = 0;
+        for(int i = 0; i < entries.Length; i++)
+        {
+            int level = RunData.instance.GetPowerupLevel(i);
+            if(level <= 0)
+            {
+                entries[i].SetActive(false);
+                continue;
+            }
+
+            RectTransform rect =
+                entries[i].GetComponent<RectTransform>();
+            Vector2 position = new Vector2(0,
+                -j * (rect.rect.height + 14));
+            entryAnimations[i].SetBasePosition(position);
+            if(!entries[i].activeSelf)
+                rect.anchoredPosition = position;
+            entries[i].SetActive(true);
+            j++;
+
+            int key = i == 4 ? 1 : i == 2 ? 2 : i == 5 ? 3 : 0;
+            float cooldown = DeckGenerator.instance == null ?
+                0 : DeckGenerator.instance.PowerupCountdown(i);
+            bool used = DeckGenerator.instance != null
+                && DeckGenerator.instance.PowerupUsed(i);
+            bool finished = used && cooldown <= 0;
+
+            if(key == 0)
+                statusTexts[i].text = level > 1 ? $"x{level}" : "";
+            else if(DeckGenerator.instance == null)
+                statusTexts[i].text = $"[{key}]";
+            else if(!used)
+                statusTexts[i].text = $"[{key}]\nREADY";
+            else if(cooldown > 0)
+                statusTexts[i].text = $"[{key}]\n{cooldown:0.0}";
+            else
+                statusTexts[i].text = $"[{key}]\nUSED";
+
+            icons[i].color = finished ?
+                new Color(.28f, .28f, .28f, .72f) : Color.white;
+            entries[i].GetComponent<Image>().color = finished ?
+                new Color(.025f, .025f, .03f, .7f) :
+                new Color(.015f, .018f, .025f, .92f);
+            statusTexts[i].color = finished ?
+                new Color(.48f, .48f, .52f) : Color.white;
+
+            RectTransform cooldownRect =
+                cooldownFills[i].rectTransform;
+            cooldownRect.anchorMax = new Vector2(1,
+                Mathf.Clamp01(cooldown / 10));
+            cooldownFills[i].enabled = cooldown > 0;
+
+            int refund = Mathf.RoundToInt(
+                RunData.PowerupCost(i) * .7f);
+            sellTexts[i].text = selectedPower == i ?
+                $"{RunData.Powerups[i].name}\nSELL +{refund}s" : "";
+        }
     }
 }

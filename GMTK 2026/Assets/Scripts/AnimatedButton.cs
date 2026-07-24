@@ -118,6 +118,11 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         rect.localScale = normalScale * .86f;
     }
 
+    public void SetBasePosition(Vector2 position)
+    {
+        normalPosition = position;
+    }
+
     private void OnDisable()
     {
         if(rect == null) return;
