@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.UI;
 
 public enum Suit
@@ -133,6 +134,12 @@ public sealed class DeckGenerator : MonoBehaviour
     private float bossTime;
     private float bossExtraTime;
     private Vector2 bossDirection;
+    private bool stickyDisabled;
+    private List<RectTransform> screensavers = new();
+    private List<TMP_Text> screensaverTexts = new();
+    private List<Vector2> screensaverDirections = new();
+    private Coroutine timeShake;
+    private Vector3 timeShakePosition;
 
     private void Awake()
     {
@@ -153,13 +160,37 @@ public sealed class DeckGenerator : MonoBehaviour
             bossText.rectTransform.localScale = Vector3.zero;
         }
         if(boss == 3) handSize = Mathf.Max(1, handSize - 2);
-        if(boss == 4 || boss == 6)
+        if(boss == 4)
             bossDirection = UnityEngine.Random.insideUnitCircle.normalized;
         if(boss == 6)
         {
-            bossText.rectTransform.anchorMin = new Vector2(.5f, .5f);
-            bossText.rectTransform.anchorMax = new Vector2(.5f, .5f);
-            bossText.rectTransform.sizeDelta = new Vector2(500, 120);
+            for(int i = 0; i < 3; i++)
+            {
+                GameObject box = new GameObject("Screensaver " + i,
+                    typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                box.transform.SetParent(bossText.transform.parent, false);
+                RectTransform rect = box.GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(.5f, .5f);
+                rect.anchorMax = new Vector2(.5f, .5f);
+                rect.sizeDelta = new Vector2(420, 100);
+                rect.anchoredPosition =
+                    new Vector2((i - 1) * 420, (i % 2 * 2 - 1) * 220);
+                box.GetComponent<Image>().color =
+                    new Color(.015f, .018f, .025f, .94f);
+
+                TMP_Text text = Instantiate(bossText, box.transform);
+                text.name = "Screensaver " + i;
+                text.text = "DVD";
+                text.rectTransform.anchorMin = Vector2.zero;
+                text.rectTransform.anchorMax = Vector2.one;
+                text.rectTransform.sizeDelta = new Vector2(-16, -10);
+                text.rectTransform.anchoredPosition = Vector2.zero;
+                text.rectTransform.localScale = Vector3.one * 1.5f;
+                screensavers.Add(rect);
+                screensaverTexts.Add(text);
+                screensaverDirections.Add(
+                    UnityEngine.Random.insideUnitCircle.normalized);
+            }
         }
         comboPosition = comboPanel.anchoredPosition;
         comboGroup.alpha = 0;
@@ -215,9 +246,10 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandleClicks()
     {
-        if(boss == 6 && pressedCard == null && draggedCard == null
-        && RectTransformUtility.RectangleContainsScreenPoint(
-        bossText.rectTransform, Mouse.current.position.ReadValue())) return;
+        if(boss == 6 && pressedCard == null && draggedCard == null)
+            foreach(RectTransform rect in screensavers)
+                if(RectTransformUtility.RectangleContainsScreenPoint(
+                rect, Mouse.current.position.ReadValue())) return;
         if(draggedCard == null && pressedCard == null
         && !Mouse.current.leftButton.wasPressedThisFrame) return;
         Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -254,7 +286,11 @@ public sealed class DeckGenerator : MonoBehaviour
                 {
                     GameObject pileCard = piles[i][piles[i].Count - 1];
                     if(!pileCard.GetComponent<Collider2D>().OverlapPoint(mousePosition)) continue;
-                    if(!CardsWork(draggedCard, i)) break;
+                    if(!CardsWork(draggedCard, i))
+                    {
+                        StartCoroutine(RejectCard(draggedCard));
+                        break;
+                    }
 
                     PlayCard(draggedCard, i);
                     break;
@@ -285,7 +321,11 @@ public sealed class DeckGenerator : MonoBehaviour
             {
                 if (selectedHandCard == null) return;
 
-                if(!CardsWork(selectedHandCard, i)) return;
+                if(!CardsWork(selectedHandCard, i))
+                {
+                    StartCoroutine(RejectCard(selectedHandCard));
+                    return;
+                }
 
                 PlayCard(selectedHandCard, i);
                 return;
@@ -360,7 +400,7 @@ public sealed class DeckGenerator : MonoBehaviour
         int multiplierGain = Mathf.FloorToInt(comboFractionalTime);
         comboFractionalTime -= multiplierGain;
         timeGain += multiplierGain;
-        RunData.instance.countdown += timeGain;
+        GainTime(timeGain);
         if(comboAnimation != null) StopCoroutine(comboAnimation);
         comboAnimation = StartCoroutine(ShowCombo(timeGain, bonusTime,
             string.Join("  •  ", comboTypes), timeMultiplier));
@@ -517,8 +557,7 @@ public sealed class DeckGenerator : MonoBehaviour
             yield break;
         }
 
-        if(RunData.instance.handInvalidGain)
-            RunData.instance.countdown += 3;
+        if(RunData.instance.handInvalidGain) GainTime(3);
         yield return StartCoroutine(AnimateShuffle());
         cardsChanged = true;
 
@@ -785,18 +824,21 @@ public sealed class DeckGenerator : MonoBehaviour
                 break;
             }
         }
-        if(boss == 4)
+        if(boss == 4 && Keyboard.current.escapeKey.wasPressedThisFrame)
+            stickyDisabled = true;
+        if(boss == 4 && !stickyDisabled && Application.isFocused)
         {
             Vector2 mouse = Mouse.current.position.ReadValue()
-                + bossDirection * 90 * Time.unscaledDeltaTime;
+                + bossDirection * 180 * Time.unscaledDeltaTime;
             mouse.x = Mathf.Clamp(mouse.x, 0, Screen.width);
             mouse.y = Mathf.Clamp(mouse.y, 0, Screen.height);
             Mouse.current.WarpCursorPosition(mouse);
+            InputState.Change(Mouse.current.position, mouse);
         }
-        if(boss == 5 && freezeCountdown <= 0)
+        if(boss >= 0 && freezeCountdown <= 0)
         {
             bossExtraTime += Time.unscaledDeltaTime
-                * RunData.instance.timerSpeed * .3f;
+                * RunData.instance.timerSpeed * (boss == 5 ? .5f : .2f);
             if(bossExtraTime >= 1)
             {
                 bossExtraTime--;
@@ -806,24 +848,24 @@ public sealed class DeckGenerator : MonoBehaviour
         }
         if(boss == 6)
         {
-            RectTransform rect = bossText.rectTransform;
-            RectTransform parent = rect.parent.GetComponent<RectTransform>();
-            Vector2 limit = (parent.rect.size - rect.rect.size) * .5f;
-            rect.anchoredPosition += bossDirection
-                * 320 * Time.unscaledDeltaTime;
-            if(Mathf.Abs(rect.anchoredPosition.x) > limit.x)
+            for(int i = 0; i < screensavers.Count; i++)
             {
-                bossDirection.x *= -1;
+                RectTransform rect = screensavers[i];
+                RectTransform parent = rect.parent.GetComponent<RectTransform>();
+                Vector2 limit = (parent.rect.size - rect.rect.size) * .5f;
+                Vector2 direction = screensaverDirections[i];
+                rect.anchoredPosition += direction
+                    * 320 * Time.unscaledDeltaTime;
+                if(Mathf.Abs(rect.anchoredPosition.x) > limit.x)
+                    direction.x *= -1;
+                if(Mathf.Abs(rect.anchoredPosition.y) > limit.y)
+                    direction.y *= -1;
                 rect.anchoredPosition = new Vector2(
                     Mathf.Clamp(rect.anchoredPosition.x, -limit.x, limit.x),
-                    rect.anchoredPosition.y);
-            }
-            if(Mathf.Abs(rect.anchoredPosition.y) > limit.y)
-            {
-                bossDirection.y *= -1;
-                rect.anchoredPosition = new Vector2(
-                    rect.anchoredPosition.x,
                     Mathf.Clamp(rect.anchoredPosition.y, -limit.y, limit.y));
+                screensaverDirections[i] = direction;
+                screensaverTexts[i].color = Color.HSVToRGB(
+                    Mathf.Repeat(bossTime * .14f + i / 3f, 1), .75f, 1);
             }
         }
         if(boss >= 0)
@@ -920,7 +962,7 @@ public sealed class DeckGenerator : MonoBehaviour
         if(movingToShop || drawPile.Count > 0 || animatingCards.Count > 0) return;
         foreach(GameObject card in handCards)
             if(card != null) return;
-        RunData.instance.countdown += 50;
+        GainTime(50);
         movingToShop = true;
         SceneTransition.Load(RunData.instance.bossRound ?
             "PowerUpShopScene" : "ShopScene");
@@ -1134,7 +1176,9 @@ public sealed class DeckGenerator : MonoBehaviour
 
         Transform drawCount = drawPileCountText.transform.parent;
         drawCount.position = Camera.main.WorldToScreenPoint(
-            GetDrawPilePosition() + Vector3.up * 1.5f);
+            GetDrawPilePosition() + Vector3.up * .85f);
+        comboTimerPanel.position = Camera.main.WorldToScreenPoint(
+            GetDrawPilePosition() + Vector3.right * 1.1f);
         if(shownDrawPileCount != drawPile.Count)
         {
             shownDrawPileCount = drawPile.Count;
@@ -1146,6 +1190,52 @@ public sealed class DeckGenerator : MonoBehaviour
         drawPileCountText.color = drawPile.Count <= 5 ?
             new Color(1, .45f, .12f) : Color.white;
         drawPileCountText.text = drawPile.Count.ToString();
+    }
+
+    private void GainTime(int amount)
+    {
+        if(amount <= 0) return;
+        RunData.instance.countdown += amount;
+        if(timeShake != null)
+        {
+            StopCoroutine(timeShake);
+            Camera.main.transform.position = timeShakePosition;
+        }
+        timeShakePosition = Camera.main.transform.position;
+        timeShake = StartCoroutine(ShakeTimeGain());
+    }
+
+    private IEnumerator ShakeTimeGain()
+    {
+        float time = 0;
+        float strength = Mathf.Min(.12f, .018f + combo * .006f);
+        while(time < .14f)
+        {
+            time += Time.unscaledDeltaTime;
+            Camera.main.transform.position = timeShakePosition
+                + (Vector3)UnityEngine.Random.insideUnitCircle
+                * strength * (1 - time / .14f);
+            yield return null;
+        }
+        Camera.main.transform.position = timeShakePosition;
+        timeShake = null;
+    }
+
+    private IEnumerator RejectCard(GameObject card)
+    {
+        if(jumpingCards.Contains(card)) yield break;
+        jumpingCards.Add(card);
+        Vector3 position = card.transform.position;
+        float time = 0;
+        while(time < .22f)
+        {
+            if(!handCards.Contains(card)) break;
+            time += Time.unscaledDeltaTime;
+            card.transform.position = position + Vector3.right
+                * Mathf.Sin(time * 65) * .13f * (1 - time / .22f);
+            yield return null;
+        }
+        jumpingCards.Remove(card);
     }
 
     private IEnumerator WhiskCard(GameObject card)

@@ -32,7 +32,7 @@ public class RunData : MonoBehaviour
         "The pile cards periodically disappear",
         "Your hand is two cards smaller",
         "The cursor is constantly pushed",
-        "The timer drains 30% faster",
+        "The timer drains another 30% faster",
         "A bouncing logo blocks your inputs",
         "Aces and kings cannot play onto each other"
     };
