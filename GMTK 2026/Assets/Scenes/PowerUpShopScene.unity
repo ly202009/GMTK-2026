@@ -590,7 +590,6 @@ GameObject:
   - component: {fileID: 2124457282}
   - component: {fileID: 2124457281}
   - component: {fileID: 2124457280}
-  - component: {fileID: 2124457283}
   m_Layer: 5
   m_Name: Power Up Shop UI
   m_TagString: Untagged
@@ -684,20 +683,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 1000
   m_TargetDisplay: 0
---- !u!114 &2124457283
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2124457278}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d34be778c8304dd0aa1afe8c60bd72b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CountdownBar
-  countdownBar: {fileID: 0}
-  countdownText: {fileID: 2150000023}
 --- !u!1 &2150000010
 GameObject:
   m_ObjectHideFlags: 0

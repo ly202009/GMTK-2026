@@ -830,7 +830,6 @@ GameObject:
   - component: {fileID: 2140000001}
   - component: {fileID: 2140000002}
   - component: {fileID: 2140000003}
-  - component: {fileID: 2170000040}
   m_Layer: 5
   m_Name: Game UI
   m_TagString: Untagged
@@ -1352,30 +1351,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2170000040
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2140000000}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d34be778c8304dd0aa1afe8c60bd72b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CountdownBar
-  countdownBar: {fileID: 2170000021}
-  countdownText: {fileID: 2170000053}
-  countdownImage: {fileID: 0}
-  numberBox: {fileID: 0}
-  speedText: {fileID: 0}
-  speedBox: {fileID: 0}
-  overflowText: {fileID: 0}
-  overflowBox: {fileID: 0}
-  overflowGroup: {fileID: 0}
-  anteText: {fileID: 0}
-  anteBox: {fileID: 0}
-  anteGroup: {fileID: 0}
 --- !u!1 &2170000050
 GameObject:
   m_ObjectHideFlags: 0

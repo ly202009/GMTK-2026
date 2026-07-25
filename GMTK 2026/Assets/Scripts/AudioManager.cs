@@ -51,11 +51,11 @@ public class AudioManager : MonoBehaviour
 
     private static float Jitter(float amount) => 1 + Random.Range(-amount, amount);
 
-    public static void BuyChip() { if (instance) instance.Play(instance.buyChip, Jitter(.05f), 1f); }
-    public static void Shuffle() { if (instance) instance.Play(instance.shuffle, Jitter(.04f), 1f); }
-    public static void PlayCard() { if (instance) instance.Play(instance.playCard, Jitter(.04f), 1f); }
-    public static void UIDown() { if (instance) instance.Play(instance.uiDown, Jitter(.06f), .7f); }
-    public static void UIUp() { if (instance) instance.Play(instance.uiUp, Jitter(.06f), .7f); }
+    public static void BuyChip() { if (instance) instance.Play(instance.buyChip, Jitter(.05f), 0.4f); }
+    public static void Shuffle() { if (instance) instance.Play(instance.shuffle, Jitter(.04f), 0.4f); }
+    public static void PlayCard() { if (instance) instance.Play(instance.playCard, Jitter(.04f), 0.4f); }
+    public static void UIDown() { if (instance) instance.Play(instance.uiDown, Jitter(.06f), .3f); }
+    public static void UIUp() { if (instance) instance.Play(instance.uiUp, Jitter(.06f), .3f); }
 
     public static void Combo(int comboTier = 0)
     {
