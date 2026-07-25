@@ -8,12 +8,16 @@ public class CountdownBar : MonoBehaviour
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private Image countdownImage;
     [SerializeField] private RectTransform numberBox;
+    [SerializeField] private TMP_Text speedText;
+    [SerializeField] private RectTransform speedBox;
 
     private float shownHeight;
     private float numberPunch;
     private float barPunch;
     private int shownCountdown;
     private Color barColor;
+    private float shownSpeed;
+    private float speedPunch;
 
     private void Start()
     {
@@ -21,6 +25,8 @@ public class CountdownBar : MonoBehaviour
         shownCountdown = RunData.instance.countdown;
         barColor = countdownImage.color;
         countdownText.fontStyle = FontStyles.Bold;
+        shownSpeed = RunData.instance.timerDrainSpeed;
+        speedText.fontStyle = FontStyles.Bold;
     }
 
     private void Update()
@@ -60,5 +66,16 @@ public class CountdownBar : MonoBehaviour
         }
 
         countdownText.text = countdown.ToString();
+
+        float speed = RunData.instance.timerDrainSpeed;
+        if(Mathf.Abs(speed - shownSpeed) > .001f) speedPunch = .16f;
+        shownSpeed = speed;
+        speedPunch = Mathf.MoveTowards(speedPunch, 0,
+            Time.unscaledDeltaTime * 1.8f);
+        speedBox.localScale = Vector3.one * (1 + speedPunch);
+        speedText.text = speed <= 0 ? "FROZEN" : $"SPEED {speed:0.00}x";
+        speedText.color = speed <= 0 ? new Color(.2f, .85f, 1) :
+            speed < .99f ? new Color(.3f, 1, .42f) :
+            speed > 1.01f ? new Color(1, .45f, .12f) : Color.white;
     }
 }

@@ -847,10 +847,10 @@ public sealed class DeckGenerator : MonoBehaviour
             Mouse.current.WarpCursorPosition(mouse);
             InputState.Change(Mouse.current.position, mouse);
         }
-        if(boss >= 0 && freezeCountdown <= 0)
+        if(boss == 5 && freezeCountdown <= 0)
         {
             bossExtraTime += Time.unscaledDeltaTime
-                * RunData.instance.timerSpeed * (boss == 5 ? .5f : .2f);
+                * RunData.instance.roundTimerSpeed * .3f;
             if(bossExtraTime >= 1)
             {
                 bossExtraTime--;

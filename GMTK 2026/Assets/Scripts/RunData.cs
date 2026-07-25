@@ -56,6 +56,11 @@ public class RunData : MonoBehaviour
     private float countdownTime;
     private bool timerFrozen;
     public float countdownValue => Mathf.Max(0, countdown - countdownTime);
+    public float roundTimerSpeed =>
+        timerSpeed * Mathf.Pow(1.05f, Mathf.Max(0, round - 1));
+    public float timerDrainSpeed => timerFrozen ? 0 :
+        roundTimerSpeed * (DeckGenerator.instance != null
+        && currentBoss == 5 ? 1.3f : 1);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Create()
@@ -118,7 +123,7 @@ public class RunData : MonoBehaviour
                 continue;
             }
 
-            countdownTime += Time.unscaledDeltaTime * timerSpeed;
+            countdownTime += Time.unscaledDeltaTime * roundTimerSpeed;
             if(countdownTime < 1) continue;
             countdownTime -= 1;
             countdown--;
