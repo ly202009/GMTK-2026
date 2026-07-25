@@ -38,10 +38,10 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     private void Start()
     {
         normalPosition = rect.anchoredPosition;
-        if(!entrancePlayed)
+        if (!entrancePlayed)
             appearDelay = Mathf.Min(rect.GetSiblingIndex() * .02f, .1f);
         TMP_Text text = GetComponentInChildren<TMP_Text>();
-        if(text != null)
+        if (text != null)
         {
             text.fontStyle |= FontStyles.Bold;
             text.characterSpacing = 2;
@@ -50,15 +50,15 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
 
     private void Update()
     {
-        if(!button.interactable)
+        if (!button.interactable)
         {
             hovered = false;
             pressed = false;
             targetScale = 1;
-            if(releaseLift <= 0) targetLift = 0;
+            if (releaseLift <= 0) targetLift = 0;
         }
 
-        if(appearDelay > 0)
+        if (appearDelay > 0)
             appearDelay -= Time.unscaledDeltaTime;
         else
             appearTime = Mathf.MoveTowards(appearTime, 1,
@@ -69,11 +69,11 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         punch = Mathf.MoveTowards(punch, 0, Time.unscaledDeltaTime * .7f);
         float phase = rect.GetSiblingIndex() * .8f;
         float breathe = Mathf.Sin(Time.unscaledTime * 2.2f + phase) * .008f;
-        if(hovered) breathe += Mathf.Sin(Time.unscaledTime * 5) * .004f;
+        if (hovered) breathe += Mathf.Sin(Time.unscaledTime * 5) * .004f;
         shake = Mathf.Max(0, shake - Time.unscaledDeltaTime);
         float shakeOffset = Mathf.Sin((.22f - shake) * 65) * 10
             * (shake / .22f);
-        if(releaseLift > 0)
+        if (releaseLift > 0)
         {
             releaseLift = Mathf.Max(0,
                 releaseLift - Time.unscaledDeltaTime);
@@ -92,7 +92,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if(!button.interactable) return;
+        if (!button.interactable) return;
         hovered = true;
         targetScale = 1.045f;
         targetLift = 4;
@@ -101,33 +101,39 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     public void OnPointerExit(PointerEventData eventData)
     {
         hovered = false;
-        if(pressed && holdUpOnPress) return;
+        if (pressed && holdUpOnPress) return;
         targetScale = 1;
         targetLift = 0;
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if(!button.interactable) return;
+        if (!button.interactable) return;
         pressed = true;
+
+        AudioManager.UIDown();
+
         releaseLift = 0;
         targetScale = holdUpOnPress ? 1.035f : .965f;
         targetLift = holdUpOnPress ? 14 : -1;
-        if(holdUpOnPress) punch = .075f;
+        if (holdUpOnPress) punch = .075f;
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if(!button.interactable) return;
+        if (!button.interactable) return;
         pressed = false;
+
+        AudioManager.UIUp();
+
         targetScale = hovered ? 1.045f : 1;
-        if(holdUpOnPress) releaseLift = .14f;
+        if (holdUpOnPress) releaseLift = .14f;
         else targetLift = hovered ? 4 : 0;
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if(!button.interactable) return;
+        if (!button.interactable) return;
         punch = .075f;
     }
 
@@ -151,7 +157,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
 
     private void OnDisable()
     {
-        if(rect == null) return;
+        if (rect == null) return;
         pressed = false;
         releaseLift = 0;
         targetLift = 0;

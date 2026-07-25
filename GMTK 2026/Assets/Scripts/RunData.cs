@@ -65,14 +65,14 @@ public class RunData : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Create()
     {
-        if(instance != null) return;
+        if (instance != null) return;
         GameObject runData = new GameObject("Run Data");
         runData.AddComponent<RunData>();
     }
 
     private void Awake()
     {
-        if(instance != null && instance != this)
+        if (instance != null && instance != this)
         {
             Destroy(gameObject);
             return;
@@ -81,16 +81,19 @@ public class RunData : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
         SceneManager.sceneLoaded += HandleSceneLoaded;
-        GameObject hud = Instantiate(
-            Resources.Load<GameObject>("CountdownHUD"), transform);
-        GameObject powerupHud = Instantiate(
-            Resources.Load<GameObject>("PowerupHUD"), hud.transform);
-        powerupHud.transform.SetSiblingIndex(
-            Mathf.Max(0, hud.transform.childCount - 2));
+
+        //hud stuff?
+        GameObject hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
+        GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
+        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 2));
         powerupHud.AddComponent<PowerupHUD>();
+
+        //audio stuff
+        GameObject AudioManager = Instantiate(Resources.Load<GameObject>("AudioManager"), transform);
+
         CreateDeck();
-        for(int i = 0; i < Bosses.Length; i++) bossOrder.Add(i);
-        for(int i = bossOrder.Count - 1; i > 0; i--)
+        for (int i = 0; i < Bosses.Length; i++) bossOrder.Add(i);
+        for (int i = bossOrder.Count - 1; i > 0; i--)
         {
             int j = UnityEngine.Random.Range(0, i + 1);
             (bossOrder[i], bossOrder[j]) = (bossOrder[j], bossOrder[i]);
@@ -100,31 +103,31 @@ public class RunData : MonoBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if(scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
+        if (scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
         currentBoss = bossRound ?
             bossOrder[(round / 3 - 1) % bossOrder.Count] : -1;
     }
 
     private void OnDestroy()
     {
-        if(instance == this)
+        if (instance == this)
             SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     private IEnumerator CountdownTimer()
     {
-        while(true)
+        while (true)
         {
             yield return null;
-            if(timerFrozen) continue;
-            if(countdown <= 0)
+            if (timerFrozen) continue;
+            if (countdown <= 0)
             {
                 countdownTime = 0;
                 continue;
             }
 
             countdownTime += Time.unscaledDeltaTime * roundTimerSpeed;
-            if(countdownTime < 1) continue;
+            if (countdownTime < 1) continue;
             countdownTime -= 1;
             countdown--;
         }
@@ -142,17 +145,17 @@ public class RunData : MonoBehaviour
 
     public int GetPowerupLevel(int power)
     {
-        if(powerupLevels[power] > 0) return powerupLevels[power];
-        if(power == 0) return Mathf.Max(0, numberOfPiles - 2);
-        if(power == 1) return Mathf.Max(0, handSize - 5);
-        if(power == 2) return allowDoubles ? 1 : 0;
-        if(power == 3 && timerSpeed < .99f)
+        if (powerupLevels[power] > 0) return powerupLevels[power];
+        if (power == 0) return Mathf.Max(0, numberOfPiles - 2);
+        if (power == 1) return Mathf.Max(0, handSize - 5);
+        if (power == 2) return allowDoubles ? 1 : 0;
+        if (power == 3 && timerSpeed < .99f)
             return Mathf.Max(1, Mathf.RoundToInt(
                 Mathf.Log(timerSpeed) / Mathf.Log(.7f)));
-        if(power == 4) return allowSuitMatching ? 1 : 0;
-        if(power == 5) return allowFreeze ? 1 : 0;
-        if(power == 6) return handInvalidGain ? 1 : 0;
-        if(power == 7) return autoDraw ? 1 : 0;
+        if (power == 4) return allowSuitMatching ? 1 : 0;
+        if (power == 5) return allowFreeze ? 1 : 0;
+        if (power == 6) return handInvalidGain ? 1 : 0;
+        if (power == 7) return autoDraw ? 1 : 0;
         return 0;
     }
 
@@ -160,31 +163,31 @@ public class RunData : MonoBehaviour
     {
         int level = GetPowerupLevel(power) + 1;
         powerupLevels[power] = level;
-        if(power == 0) numberOfPiles = 2 + level;
-        if(power == 1) handSize = 5 + level;
-        if(power == 2) allowDoubles = true;
-        if(power == 3) timerSpeed = Mathf.Pow(.7f, level);
-        if(power == 4) allowSuitMatching = true;
-        if(power == 5) allowFreeze = true;
-        if(power == 6) handInvalidGain = true;
-        if(power == 7) autoDraw = true;
+        if (power == 0) numberOfPiles = 2 + level;
+        if (power == 1) handSize = 5 + level;
+        if (power == 2) allowDoubles = true;
+        if (power == 3) timerSpeed = Mathf.Pow(.7f, level);
+        if (power == 4) allowSuitMatching = true;
+        if (power == 5) allowFreeze = true;
+        if (power == 6) handInvalidGain = true;
+        if (power == 7) autoDraw = true;
     }
 
     public int SellPowerup(int power)
     {
         int level = GetPowerupLevel(power);
-        if(level <= 0) return 0;
+        if (level <= 0) return 0;
 
         level--;
         powerupLevels[power] = level;
-        if(power == 0) numberOfPiles = 2 + level;
-        if(power == 1) handSize = 5 + level;
-        if(power == 2) allowDoubles = level > 0;
-        if(power == 3) timerSpeed = Mathf.Pow(.7f, level);
-        if(power == 4) allowSuitMatching = level > 0;
-        if(power == 5) allowFreeze = level > 0;
-        if(power == 6) handInvalidGain = level > 0;
-        if(power == 7) autoDraw = level > 0;
+        if (power == 0) numberOfPiles = 2 + level;
+        if (power == 1) handSize = 5 + level;
+        if (power == 2) allowDoubles = level > 0;
+        if (power == 3) timerSpeed = Mathf.Pow(.7f, level);
+        if (power == 4) allowSuitMatching = level > 0;
+        if (power == 5) allowFreeze = level > 0;
+        if (power == 6) handInvalidGain = level > 0;
+        if (power == 7) autoDraw = level > 0;
 
         int refund = Mathf.RoundToInt(PowerupCost(power) * .7f);
         countdown += refund;
@@ -193,10 +196,10 @@ public class RunData : MonoBehaviour
 
     private void CreateDeck()
     {
-        if(deck.Count > 0) return;
+        if (deck.Count > 0) return;
 
-        foreach(Suit suit in Enum.GetValues(typeof(Suit)))
-            for(int i = 1; i <= 13; i++)
+        foreach (Suit suit in Enum.GetValues(typeof(Suit)))
+            for (int i = 1; i <= 13; i++)
             {
                 int properties = 0;
                 // for(int j = 0; j < 5; j++)
@@ -235,7 +238,7 @@ public class PowerupHUD : MonoBehaviour
         Sprite fallbackSprite =
             Resources.LoadAll<Sprite>("Powerups/Extra Playable Stacks")[0];
 
-        for(int i = 0; i < entries.Length; i++)
+        for (int i = 0; i < entries.Length; i++)
         {
             int j = i;
             entries[i] = Instantiate(entryTemplate, listRect).gameObject;
@@ -273,20 +276,20 @@ public class PowerupHUD : MonoBehaviour
     private void SellPowerup(int power)
     {
         int refund = RunData.instance.SellPowerup(power);
-        if(refund > 0 && DeckGenerator.instance != null)
+        if (refund > 0 && DeckGenerator.instance != null)
             DeckGenerator.instance.RemovePowerup(power);
         selectedPower = -1;
     }
 
     private void Update()
     {
-        if(RunData.instance == null) return;
+        if (RunData.instance == null) return;
 
         int j = 0;
-        for(int i = 0; i < entries.Length; i++)
+        for (int i = 0; i < entries.Length; i++)
         {
             int level = RunData.instance.GetPowerupLevel(i);
-            if(level <= 0)
+            if (level <= 0)
             {
                 entries[i].SetActive(false);
                 continue;
@@ -298,7 +301,7 @@ public class PowerupHUD : MonoBehaviour
                 selectedPower == i ? 12 : 0,
                 -j * (rect.rect.height + 14));
             entryAnimations[i].SetBasePosition(position);
-            if(!entries[i].activeSelf)
+            if (!entries[i].activeSelf)
                 rect.anchoredPosition = position;
             entries[i].SetActive(true);
             j++;
@@ -310,13 +313,13 @@ public class PowerupHUD : MonoBehaviour
                 && DeckGenerator.instance.PowerupUsed(i);
             bool finished = used && cooldown <= 0;
 
-            if(key == 0)
+            if (key == 0)
                 statusTexts[i].text = level > 1 ? $"x{level}" : "";
-            else if(DeckGenerator.instance == null)
+            else if (DeckGenerator.instance == null)
                 statusTexts[i].text = $"[{key}]";
-            else if(!used)
+            else if (!used)
                 statusTexts[i].text = $"[{key}]\nREADY";
-            else if(cooldown > 0)
+            else if (cooldown > 0)
                 statusTexts[i].text = $"[{key}]\n{cooldown:0.0}";
             else
                 statusTexts[i].text = $"[{key}]\nUSED";
@@ -340,12 +343,12 @@ public class PowerupHUD : MonoBehaviour
             sellTexts[i].text = $"SELL +{refund}s";
             bool showSell = selectedPower == i;
             statusTexts[i].enabled = !showSell;
-            if(showSell && !sellButtons[i].gameObject.activeSelf)
+            if (showSell && !sellButtons[i].gameObject.activeSelf)
             {
                 sellButtons[i].gameObject.SetActive(true);
                 sellButtons[i].GetComponent<AnimatedButton>().PlayEntrance(0);
             }
-            else if(!showSell)
+            else if (!showSell)
                 sellButtons[i].gameObject.SetActive(false);
         }
     }

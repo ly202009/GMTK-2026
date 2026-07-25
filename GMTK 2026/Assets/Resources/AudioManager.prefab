@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8422422466254906909
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8550617143485422172}
+  - component: {fileID: 4679720025168389852}
+  m_Layer: 0
+  m_Name: AudioManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8550617143485422172
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8422422466254906909}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4679720025168389852
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8422422466254906909}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4462495d3626e4644965040d9d8a810c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AudioManager
+  buyChip:
+  - {fileID: 8300000, guid: 7e9868d096d44f44ab6d6eba8b070335, type: 3}
+  - {fileID: 8300000, guid: c0f16edf07de82842aa12d9f23d2fc61, type: 3}
+  playCard:
+  - {fileID: 8300000, guid: 66261c3b1e8eaed42a52ab16350e2553, type: 3}
+  - {fileID: 8300000, guid: c2d14018e99b74a48afdbb3636372f94, type: 3}
+  shuffle:
+  - {fileID: 8300000, guid: b190555590af0c140920f9fde0afed6b, type: 3}
+  combo:
+  - {fileID: 8300000, guid: 8a69671e9a3021d4bbb4777fc1140636, type: 3}
+  uiDown:
+  - {fileID: 8300000, guid: 7cbbc08f8091fe24fab2a25367ca639c, type: 3}
+  uiUp:
+  - {fileID: 8300000, guid: 3748ad81c80a9524595e9eb4facdfd95, type: 3}
+  poolSize: 16
+  masterVolume: 0.8

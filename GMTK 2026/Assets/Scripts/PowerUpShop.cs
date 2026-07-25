@@ -20,7 +20,7 @@ public class PowerUpShop : MonoBehaviour
     {
         Sprite fallbackSprite =
             Resources.LoadAll<Sprite>("Powerups/Extra Playable Stacks")[0];
-        for(int i = 0; i < powerSprites.Length; i++)
+        for (int i = 0; i < powerSprites.Length; i++)
         {
             Sprite[] sprites = RunData.Powerups[i].sprite == null ?
                 new Sprite[0] : Resources.LoadAll<Sprite>(
@@ -28,7 +28,7 @@ public class PowerUpShop : MonoBehaviour
             powerSprites[i] = sprites.Length > 0 ? sprites[0] : fallbackSprite;
         }
 
-        for(int i = 0; i < powerButtons.Length; i++)
+        for (int i = 0; i < powerButtons.Length; i++)
         {
             powerButtons[i] = Instantiate(rerollButton, rerollButton.transform.parent);
             powerButtons[i].name = "Powerup " + i;
@@ -72,19 +72,19 @@ public class PowerUpShop : MonoBehaviour
     {
         chosenSlot = -1;
         List<int> available = new() { 0, 1, 3 };
-        if(!RunData.instance.allowDoubles) available.Add(2);
-        if(!RunData.instance.allowSuitMatching) available.Add(4);
-        if(!RunData.instance.allowFreeze) available.Add(5);
-        if(!RunData.instance.handInvalidGain) available.Add(6);
-        if(!RunData.instance.autoDraw) available.Add(7);
+        if (!RunData.instance.allowDoubles) available.Add(2);
+        if (!RunData.instance.allowSuitMatching) available.Add(4);
+        if (!RunData.instance.allowFreeze) available.Add(5);
+        if (!RunData.instance.handInvalidGain) available.Add(6);
+        if (!RunData.instance.autoDraw) available.Add(7);
 
-        for(int i = available.Count - 1; i > 0; i--)
+        for (int i = available.Count - 1; i > 0; i--)
         {
             int j = Random.Range(0, i + 1);
             (available[i], available[j]) = (available[j], available[i]);
         }
 
-        for(int i = 0; i < powerButtons.Length; i++)
+        for (int i = 0; i < powerButtons.Length; i++)
         {
             shownPowers[i] = available[i];
             powerButtons[i].interactable = true;
@@ -102,7 +102,7 @@ public class PowerUpShop : MonoBehaviour
     private void BuyPowerup(int slot)
     {
         int power = shownPowers[slot];
-        if(chosenSlot != -1)
+        if (chosenSlot != -1)
         {
             powerButtons[slot].GetComponent<AnimatedButton>().Reject();
             return;
@@ -112,19 +112,22 @@ public class PowerUpShop : MonoBehaviour
         RunData.instance.AddPowerup(power);
 
         chosenSlot = slot;
+
+        AudioManager.BuyChip();
+
         powerTexts[slot].text =
             $"CHOSEN!\n{RunData.Powerups[power].name}\n{progress}";
         powerTexts[slot].color = new Color(.25f, 1, .35f);
         powerButtons[slot].GetComponent<Image>().color =
             new Color(.55f, 1, .6f);
-        for(int i = 0; i < powerButtons.Length; i++)
+        for (int i = 0; i < powerButtons.Length; i++)
             powerButtons[i].interactable = false;
     }
 
     private void Reroll()
     {
         int rerollCost = 10 + rerolls * 3;
-        if(chosenSlot != -1 || RunData.instance.countdown < rerollCost) return;
+        if (chosenSlot != -1 || RunData.instance.countdown < rerollCost) return;
         RunData.instance.countdown -= rerollCost;
         rerolls++;
         ShowPowerups();
@@ -132,13 +135,13 @@ public class PowerUpShop : MonoBehaviour
 
     private string GetProgress(int power)
     {
-        if(power == 0)
+        if (power == 0)
             return $"{RunData.instance.numberOfPiles} PILES"
                 + $" \u2192 {RunData.instance.numberOfPiles + 1} PILES";
-        if(power == 1)
+        if (power == 1)
             return $"HAND {RunData.instance.handSize}"
                 + $" \u2192 {RunData.instance.handSize + 1}";
-        if(power == 3)
+        if (power == 3)
             return $"SPEED {RunData.instance.timerSpeed:0.0}"
                 + $" \u2192 {RunData.instance.timerSpeed * .7f:0.0}";
         return "OFF \u2192 ON";
@@ -151,9 +154,9 @@ public class PowerUpShop : MonoBehaviour
         rerollButton.interactable = chosenSlot == -1
             && RunData.instance.countdown >= rerollCost;
 
-        for(int i = 0; i < powerButtons.Length; i++)
+        for (int i = 0; i < powerButtons.Length; i++)
         {
-            if(i == chosenSlot) continue;
+            if (i == chosenSlot) continue;
             int power = shownPowers[i];
             powerTexts[i].text =
                 $"{RunData.Powerups[power].name}\n{GetProgress(power)}\nFREE";

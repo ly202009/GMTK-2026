@@ -58,7 +58,7 @@ public class Shop : MonoBehaviour
         float duration, float delay = 0)
     {
         movingThings.Add(thing);
-        if(delay > 0) yield return new WaitForSeconds(delay);
+        if (delay > 0) yield return new WaitForSeconds(delay);
         Vector3 normalScale = thing.transform.localScale;
         for (float t = 0.0f; t <= duration; t += Time.deltaTime)
         {
@@ -160,35 +160,35 @@ public class Shop : MonoBehaviour
     }
     private void ChooseCards()
     {
-        if(heldCard != -1 && !Mouse.current.leftButton.isPressed)
+        if (heldCard != -1 && !Mouse.current.leftButton.isPressed)
         {
             cardPops[heldCard] = .13f;
             heldCard = -1;
         }
-        if(applyingCard != null) return;
+        if (applyingCard != null) return;
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D hoveredCollider = Physics2D.OverlapPoint(mousePos);
 
         if (Mouse.current.leftButton.wasPressedThisFrame && hoveredCollider != null)
         {
-            if(cards.Contains(hoveredCollider.gameObject))
+            if (cards.Contains(hoveredCollider.gameObject))
             {
                 cardSelected = Array.IndexOf(cards, hoveredCollider.gameObject);
                 heldCard = cardSelected;
                 cardPops[cardSelected] = 0;
             }
-            if(seals.Contains(hoveredCollider.gameObject))
+            if (seals.Contains(hoveredCollider.gameObject))
             {
                 sealSelected = Array.IndexOf(seals, hoveredCollider.gameObject);
-                if(!movingThings.Contains(seals[sealSelected]))
+                if (!movingThings.Contains(seals[sealSelected]))
                     StartCoroutine(JumpThing(seals[sealSelected],
                         sealPositions[sealSelected] + new Vector3(0, .28f, 0)));
             }
         }
 
-        for(int i = 0; i < cards.Length; i++)
+        for (int i = 0; i < cards.Length; i++)
         {
-            if(cards[i] == null || cards[i] == applyingCard
+            if (cards[i] == null || cards[i] == applyingCard
             || movingThings.Contains(cards[i])) continue;
             float lift = i == heldCard ? .46f :
                 i == cardSelected ? .28f :
@@ -209,9 +209,9 @@ public class Shop : MonoBehaviour
                 1 - Mathf.Exp(-15 * Time.deltaTime));
         }
 
-        for(int i = 0; i < seals.Length; i++)
+        for (int i = 0; i < seals.Length; i++)
         {
-            if(seals[i] == null || !seals[i].activeSelf
+            if (seals[i] == null || !seals[i].activeSelf
             || movingThings.Contains(seals[i])) continue;
             float lift = i == sealSelected ? .28f :
                 hoveredCollider != null && hoveredCollider.gameObject == seals[i] ? .08f : 0;
@@ -252,7 +252,7 @@ public class Shop : MonoBehaviour
         applyingCard = cards[cardSelect];
         heldCard = -1;
         cardPops[cardSelect] = 0;
-        if((shownCards[cardSelect].properties & property) != 0
+        if ((shownCards[cardSelect].properties & property) != 0
         || RunData.instance.countdown < modifierCost || !isAvailable[sealSelect])
         {
             StartCoroutine(ShakeCard(seals[sealSelect], .2f));
@@ -264,6 +264,9 @@ public class Shop : MonoBehaviour
         CardData thisCard = shownCards[cardSelect];
         thisCard.properties = shownCards[cardSelect].properties | property;
         RunData.instance.countdown -= modifierCost;
+
+        AudioManager.BuyChip();
+
         RunData.instance.deck[cardSelect] = thisCard;
         shownCards[cardSelect] = thisCard;
         isAvailable[sealSelect] = false;
@@ -282,7 +285,7 @@ public class Shop : MonoBehaviour
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, new Vector3(0, 0, 0), 0.1f));
         Vector3 normalScale = cards[cardSelect].transform.localScale;
         Vector3 middlePosition = cards[cardSelect].transform.position;
-        for(float t = 0; t < .22f; t += Time.deltaTime)
+        for (float t = 0; t < .22f; t += Time.deltaTime)
         {
             float amount = t / .22f;
             float pop = Mathf.Sin(amount * Mathf.PI);
@@ -297,7 +300,7 @@ public class Shop : MonoBehaviour
         yield return StartCoroutine(MoveThing(cards[cardSelect], cards[cardSelect].transform.position, cardPositions[cardSelect], 0.1f));
         applyingCard = null;
 
-        
+
     }
     GameObject DrawCard(CardData cardData)
     {
@@ -313,20 +316,20 @@ public class Shop : MonoBehaviour
             _ => 0
         };
 
-        for(int i = 0; i < cardSprites.Length; i++)
+        for (int i = 0; i < cardSprites.Length; i++)
         {
             int x = Mathf.RoundToInt(cardSprites[i].rect.x / 24);
             int y = Mathf.RoundToInt(cardSprites[i].rect.y / 36);
-            if(x != cardData.values[0] - 1 || y != suitRow) continue;
+            if (x != cardData.values[0] - 1 || y != suitRow) continue;
             cardRenderer.sprite = cardSprites[i];
             break;
         }
         SetCardMaterial(card, cardData);
-        for(int i = 0; i < Properties.Length; i++)
+        for (int i = 0; i < Properties.Length; i++)
         {
-            if(Properties[i].property == CardData.Transparent
+            if (Properties[i].property == CardData.Transparent
             || Properties[i].property == CardData.WildCard) continue;
-            if(Properties[i].seal == null
+            if (Properties[i].seal == null
             || !propertySeals.ContainsKey(Properties[i].property)) continue;
             GameObject seal = new GameObject($"Seal {Properties[i].property}");
             seal.transform.SetParent(card.transform, false);
@@ -337,7 +340,7 @@ public class Shop : MonoBehaviour
             sealRenderer.sprite = propertySeals[Properties[i].property];
             sealRenderer.sharedMaterial = cardMaterials[0];
             sealRenderer.enabled = (cardData.properties & Properties[i].property) != 0;
-            sealRenderer.sortingOrder = cardRenderer.sortingOrder+1;
+            sealRenderer.sortingOrder = cardRenderer.sortingOrder + 1;
         }
         Destroy(card.GetComponent<Canvas>());
         card.SetActive(true);
@@ -357,15 +360,15 @@ public class Shop : MonoBehaviour
     private void Reroll()
     {
         int rerollCost = 3 + rerolls * 2;
-        if(RunData.instance.countdown < rerollCost
+        if (RunData.instance.countdown < rerollCost
         || movingThings.Count > 0 || applyingCard != null) return;
 
         RunData.instance.countdown -= rerollCost;
         rerolls++;
-        for(int i = 0; i < cards.Length; i++)
-            if(cards[i] != null) Destroy(cards[i]);
-        for(int i = 0; i < seals.Length; i++)
-            if(seals[i] != null) Destroy(seals[i]);
+        for (int i = 0; i < cards.Length; i++)
+            if (cards[i] != null) Destroy(cards[i]);
+        for (int i = 0; i < seals.Length; i++)
+            if (seals[i] != null) Destroy(seals[i]);
         movingThings.Clear();
         ShowCards();
     }
@@ -389,12 +392,12 @@ public class Shop : MonoBehaviour
 
         cardSprites = Resources.LoadAll<Sprite>("ClassicCards");
         cardBack = Resources.LoadAll<Sprite>("LightClassic")[0];
-        for(int i = 0; i < Properties.Length; i++)
-            if(Properties[i].seal != null)
+        for (int i = 0; i < Properties.Length; i++)
+            if (Properties[i].seal != null)
             {
                 Sprite[] seals = Resources.LoadAll<Sprite>(
                     "modifiers/" + Properties[i].seal);
-                if(seals.Length > 0)
+                if (seals.Length > 0)
                     propertySeals.Add(Properties[i].property, seals[0]);
             }
         cardMaterials = new Material[]
@@ -411,7 +414,7 @@ public class Shop : MonoBehaviour
         moveToGameButton.onClick.AddListener(MoveToGame);
         ShowCards();
 
-        
+
     }
     void Update()
     {
@@ -420,7 +423,7 @@ public class Shop : MonoBehaviour
         rerollButton.interactable = RunData.instance.countdown >= rerollCost
             && movingThings.Count == 0 && applyingCard == null;
         ChooseCards();
-        if(cardSelected != -1 && sealSelected != -1 && applyingCard == null)
+        if (cardSelected != -1 && sealSelected != -1 && applyingCard == null)
         {
             StartCoroutine(ApplySealToCard());
             cardSelected = -1;
