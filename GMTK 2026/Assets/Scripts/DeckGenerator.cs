@@ -500,8 +500,7 @@ public sealed class DeckGenerator : MonoBehaviour
         if (boss == 7 && (cardValue == 1 && topValue == 13
         || cardValue == 13 && topValue == 1)) return false;
 
-        if ((cardData[card].properties & CardData.WildCard) != 0
-        || (cardData[topCard].properties & CardData.WildCard) != 0) return true;
+        if ((cardData[card].properties & CardData.WildCard) != 0) return true;
 
         if (suitMatchingCountdown > 0
         && cardData[card].suit == cardData[topCard].suit)
@@ -1184,7 +1183,7 @@ public sealed class DeckGenerator : MonoBehaviour
                         Quaternion.Euler(0, 0, Mathf.Sin(idle) * 1.4f) :
                         Quaternion.identity;
                 }
-                SetSortingOrder(piles[i][j], j + 10);
+                SetSortingOrder(piles[i][j], j + 10, false);
                 bool hidden = boss == 2 && Mathf.Repeat(bossTime, 6) > 3;
                 SpriteRenderer[] renderers =
                     piles[i][j].GetComponentsInChildren<SpriteRenderer>(true);
@@ -1495,14 +1494,16 @@ public sealed class DeckGenerator : MonoBehaviour
         return card;
     }
 
-    private void SetSortingOrder(GameObject card, int sortingOrder)
+    private void SetSortingOrder(GameObject card, int sortingOrder,
+        bool showWildCard = true)
     {
         int cardOrder = sortingOrder * 3 + 10;
         SpriteRenderer cardRenderer = card.GetComponent<SpriteRenderer>();
         int transparentIndex =
             (cardData[card].properties & CardData.Transparent) / CardData.Transparent;
-        int wildCardIndex =
-            (cardData[card].properties & CardData.WildCard) / CardData.WildCard;
+        int wildCardIndex = showWildCard ?
+            (cardData[card].properties & CardData.WildCard) / CardData.WildCard
+            : 0;
         int cardMaterialIndex = transparentIndex + wildCardIndex * 2;
 
         cardRenderer.sprite = cardFaces[card];
