@@ -137,4 +137,9 @@ public class SoundtrackManager : MonoBehaviour
             isIntense = true;
         }
     }
+
+    private void OnDestroy()
+    {
+        SceneManager.activeSceneChanged -= sceneChange;
+    }
 }
