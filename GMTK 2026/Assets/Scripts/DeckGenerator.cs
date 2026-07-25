@@ -97,6 +97,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private List<GameObject> handCards = new();
     private List<List<GameObject>> piles = new();
     private List<GameObject> drawPile = new();
+    private List<CardData> reserveCards = new();
     private HashSet<GameObject> animatingCards = new();
     private HashSet<GameObject> jumpingCards = new();
     private Dictionary<GameObject, float> cardClickPops = new();
@@ -626,6 +627,16 @@ public sealed class DeckGenerator : MonoBehaviour
             foundPlayableTop = IsHandPlayable();
         }
 
+        while (!foundPlayableTop && reserveCards.Count > 0)
+        {
+            CardData data = reserveCards[reserveCards.Count - 1];
+            reserveCards.RemoveAt(reserveCards.Count - 1);
+            data.properties &= ~CardData.Transparent;
+            piles[pileIndex].Add(CreateCard(data));
+            pileIndex = (pileIndex + 1) % piles.Count;
+            foundPlayableTop = IsHandPlayable();
+        }
+
         yield return StartCoroutine(AnimateShuffle());
         for (int i = 0; i < piles.Count; i++)
             yield return StartCoroutine(FadeTransparentTop(i));
@@ -854,6 +865,7 @@ public sealed class DeckGenerator : MonoBehaviour
                     drawPile.RemoveAt(drawPile.Count - 1);
                     piles[k].Add(replacement);
                 }
+                reserveCards.Add(cardData[card]);
                 cardData.Remove(card);
                 cardFaces.Remove(card);
                 reshuffledCurrentState = false;
@@ -1380,6 +1392,7 @@ public sealed class DeckGenerator : MonoBehaviour
         }
 
         piles[pileIndex].Remove(card);
+        reserveCards.Add(cardData[card]);
         cardData.Remove(card);
         cardFaces.Remove(card);
         animatingCards.Remove(card);
