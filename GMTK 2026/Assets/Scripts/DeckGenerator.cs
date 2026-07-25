@@ -398,16 +398,18 @@ public sealed class DeckGenerator : MonoBehaviour
         int cardsInHand = 0;
         foreach (GameObject handCard in handCards)
             if (handCard != null) cardsInHand++;
-        if (cardsInHand == 1)
+        bool emptyHand = cardsInHand == 1;
+        if (emptyHand)
         {
             comboTypes.Add("EMPTY HAND");
-            timeMultiplier += .15f;
+            timeMultiplier += .3f;
         }
 
         bool bonusTime =
             (playedCard.properties & CardData.BonusTime) != 0;
         int timeGain = combo <= 1 ? 0 :
             Mathf.CeilToInt((combo - 1) / 4f);
+        if (emptyHand) timeGain += 4;
         if (bonusTime) timeGain++;
         comboFractionalTime += timeGain * (timeMultiplier - 1);
         int multiplierGain = Mathf.FloorToInt(comboFractionalTime);
@@ -416,7 +418,7 @@ public sealed class DeckGenerator : MonoBehaviour
         GainTime(timeGain);
         if (comboAnimation != null) StopCoroutine(comboAnimation);
         comboAnimation = StartCoroutine(ShowCombo(timeGain, bonusTime,
-            string.Join("  •  ", comboTypes), timeMultiplier));
+            string.Join("  •  ", comboTypes), timeMultiplier, emptyHand));
 
         handCards[handCards.IndexOf(card)] = null;
         cardClickPops.Remove(card);
@@ -726,19 +728,24 @@ public sealed class DeckGenerator : MonoBehaviour
     }
 
     private IEnumerator ShowCombo(int timeGain, bool bonusTime,
-        string comboType, float timeMultiplier)
+        string comboType, float timeMultiplier, bool bigCombo)
     {
+        int comboSize = bigCombo ? 54 : 42;
+        int gainSize = bigCombo ? 38 : 30;
+        int typeSize = bigCombo ? 28 : 20;
         string typeText = comboType.Length > 0 ?
-            $"\n<size=20><color=#62D9FF>{comboType}  "
+            $"\n<size={typeSize}><color=#62D9FF>{comboType}  "
             + $"x{timeMultiplier:0.00}</color></size>" : "";
         comboText.text = timeGain > 0 ?
-            $"<size=42>{combo}x COMBO</size>\n"
-            + $"<size=30><color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
+            $"<size={comboSize}>{combo}x COMBO</size>\n"
+            + $"<size={gainSize}><color=#{(bonusTime ? "FFE45C" : "71FF8D")}>"
             + $"+{timeGain} SECOND{(timeGain == 1 ? "" : "S")}</color></size>"
             + typeText :
-            "<size=42>1x COMBO</size>" + typeText;
-        Color comboColor = bonusTime ?
+            $"<size={comboSize}>1x COMBO</size>" + typeText;
+        Color comboColor = bigCombo ? new Color(.25f, 1, .9f) : bonusTime ?
             new Color(1, .78f, .12f) : new Color(.55f, 1, .65f);
+        float normalScale = bigCombo ? 1.12f : 1;
+        float popScale = bigCombo ? 1.6f : 1.24f;
         comboGroup.alpha = 1;
         comboPanel.anchoredPosition = comboPosition - Vector2.up * 24;
         comboPanel.localScale = Vector3.one * .35f;
@@ -752,7 +759,7 @@ public sealed class DeckGenerator : MonoBehaviour
             float amount = Mathf.Clamp01(time / .16f);
             amount = 1 - Mathf.Pow(1 - amount, 3);
             comboPanel.localScale =
-                Vector3.one * Mathf.Lerp(.35f, 1.24f, amount);
+                Vector3.one * Mathf.Lerp(.35f, popScale, amount);
             comboPanel.anchoredPosition = Vector2.Lerp(
                 comboPosition - Vector2.up * 24, comboPosition, amount);
             comboPanel.localRotation = Quaternion.Lerp(
@@ -763,13 +770,14 @@ public sealed class DeckGenerator : MonoBehaviour
         }
 
         time = 0;
-        while (time < .42f)
+        while (time < (bigCombo ? .58f : .42f))
         {
             time += Time.unscaledDeltaTime;
-            float bounce = Mathf.Sin(time * 20) * Mathf.Exp(-time * 9);
-            comboPanel.localScale = Vector3.one * (1 + bounce * .11f);
+            float bounce = Mathf.Cos(time * 20) * Mathf.Exp(-time * 9);
+            comboPanel.localScale = Vector3.one *
+                (normalScale + bounce * (popScale - normalScale));
             comboPanel.localRotation =
-                Quaternion.Euler(0, 0, bounce * direction * 3);
+                Quaternion.Euler(0, 0, bounce * direction * -2);
             yield return null;
         }
 
@@ -782,7 +790,8 @@ public sealed class DeckGenerator : MonoBehaviour
             comboPanel.anchoredPosition =
                 comboPosition + new Vector2(direction * amount * 16,
                     amount * 58);
-            comboPanel.localScale = Vector3.one * (1 + amount * .08f);
+            comboPanel.localScale =
+                Vector3.one * normalScale * (1 + amount * .08f);
             yield return null;
         }
 
