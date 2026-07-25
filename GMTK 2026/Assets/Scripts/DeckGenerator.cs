@@ -624,11 +624,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
         yield return StartCoroutine(AnimateShuffle());
         for (int i = 0; i < piles.Count; i++)
-            while (piles[i].Count > 1
-            && (cardData[piles[i][piles[i].Count - 1]].properties
-            & CardData.Transparent) != 0)
-                yield return StartCoroutine(FadeTransparentCard(
-                    piles[i][piles[i].Count - 1], i));
+            yield return StartCoroutine(FadeTransparentTop(i));
         cardsChanged = true;
     }
 
@@ -835,7 +831,8 @@ public sealed class DeckGenerator : MonoBehaviour
     private void Update()
     {
         bossTime += Time.unscaledDeltaTime;
-        if (boss == 1 && bossTime >= 3)
+        if (boss == 1 && bossTime >= 3
+        && !autoPlaying && animatingCards.Count == 0)
         {
             bossTime = 0;
             int j = UnityEngine.Random.Range(0, piles.Count);
@@ -854,8 +851,9 @@ public sealed class DeckGenerator : MonoBehaviour
                 }
                 cardData.Remove(card);
                 cardFaces.Remove(card);
-                StartCoroutine(WhiskCard(card));
-                cardsChanged = true;
+                reshuffledCurrentState = false;
+                autoPlaying = true;
+                StartCoroutine(WhiskCard(card, k));
                 break;
             }
         }
@@ -1284,7 +1282,7 @@ public sealed class DeckGenerator : MonoBehaviour
         jumpingCards.Remove(card);
     }
 
-    private IEnumerator WhiskCard(GameObject card)
+    private IEnumerator WhiskCard(GameObject card, int pileIndex)
     {
         animatingCards.Add(card);
         SpriteRenderer[] renderers =
@@ -1305,6 +1303,9 @@ public sealed class DeckGenerator : MonoBehaviour
         }
         animatingCards.Remove(card);
         Destroy(card);
+        yield return StartCoroutine(FadeTransparentTop(pileIndex));
+        cardsChanged = true;
+        autoPlaying = false;
     }
 
     private IEnumerator AnimateCardToPile(GameObject card, int pileIndex)
@@ -1379,6 +1380,15 @@ public sealed class DeckGenerator : MonoBehaviour
         animatingCards.Remove(card);
         Destroy(card);
         cardsChanged = true;
+    }
+
+    private IEnumerator FadeTransparentTop(int pileIndex)
+    {
+        while (piles[pileIndex].Count > 1
+        && (cardData[piles[pileIndex][piles[pileIndex].Count - 1]].properties
+        & CardData.Transparent) != 0)
+            yield return StartCoroutine(FadeTransparentCard(
+                piles[pileIndex][piles[pileIndex].Count - 1], pileIndex));
     }
 
     private IEnumerator AnimateCardToHand(GameObject card, int handIndex)
