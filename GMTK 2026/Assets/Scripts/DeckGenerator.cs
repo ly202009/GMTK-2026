@@ -134,7 +134,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private float comboLevelPunch;
     private int boss;
     private float bossTime;
-    private float bossExtraTime;
+    private bool autoPlaying;
     private Vector2 bossDirection;
     private bool stickyDisabled;
     private List<RectTransform> screensavers = new();
@@ -248,6 +248,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandleClicks()
     {
+        if (autoPlaying) return;
         if (boss == 6 && pressedCard == null && draggedCard == null)
             foreach (RectTransform rect in screensavers)
                 if (RectTransformUtility.RectangleContainsScreenPoint(
@@ -446,13 +447,13 @@ public sealed class DeckGenerator : MonoBehaviour
         }
     }
 
-    private void HandleAutoPlay()
+    private IEnumerator HandleAutoPlay()
     {
-        bool playedCard = true;
-
-        while (playedCard)
+        cardsChanged = false;
+        while (true)
         {
-            playedCard = false;
+            GameObject card = null;
+            int pile = -1;
             for (int i = 0; i < handCards.Count; i++)
             {
                 if (handCards[i] == null) continue;
@@ -462,19 +463,23 @@ public sealed class DeckGenerator : MonoBehaviour
                 for (int j = 0; j < piles.Count; j++)
                 {
                     if (!CardsWork(handCards[i], j)) continue;
-
-                    GameObject card = handCards[i];
-                    PlayCard(card, j);
-                    if ((cardData[card].properties & CardData.Transparent) != 0) return;
-                    playedCard = true;
+                    card = handCards[i];
+                    pile = j;
                     break;
                 }
-
-                if (playedCard) break;
+                if (card != null) break;
             }
+
+            if (card == null) break;
+            bool transparent =
+                (cardData[card].properties & CardData.Transparent) != 0;
+            PlayCard(card, pile);
+            cardsChanged = false;
+            yield return new WaitForSeconds(.11f);
+            if (transparent) break;
         }
 
-        cardsChanged = false;
+        autoPlaying = false;
     }
 
     private bool IsHandPlayable()
@@ -861,17 +866,6 @@ public sealed class DeckGenerator : MonoBehaviour
             Mouse.current.WarpCursorPosition(mouse);
             InputState.Change(Mouse.current.position, mouse);
         }
-        if (boss == 5 && freezeCountdown <= 0)
-        {
-            bossExtraTime += Time.unscaledDeltaTime
-                * RunData.instance.roundTimerSpeed * .3f;
-            if (bossExtraTime >= 1)
-            {
-                bossExtraTime--;
-                RunData.instance.countdown =
-                    Mathf.Max(0, RunData.instance.countdown - 1);
-            }
-        }
         if (boss == 6)
         {
             for (int i = 0; i < screensavers.Count; i++)
@@ -983,9 +977,13 @@ public sealed class DeckGenerator : MonoBehaviour
 
         HandlePowerups();
         HandleClicks();
-        if (cardsChanged) HandleAutoPlay();
-        HandleReShuffle();
-        if (cardsChanged) HandleAutoPlay();
+        if (cardsChanged && !autoPlaying
+        && pressedCard == null && draggedCard == null)
+        {
+            autoPlaying = true;
+            StartCoroutine(HandleAutoPlay());
+        }
+        if (!autoPlaying) HandleReShuffle();
 
         if (combo != shownCombo)
         {

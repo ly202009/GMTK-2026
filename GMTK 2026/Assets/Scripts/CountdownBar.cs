@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,6 +11,12 @@ public class CountdownBar : MonoBehaviour
     [SerializeField] private RectTransform numberBox;
     [SerializeField] private TMP_Text speedText;
     [SerializeField] private RectTransform speedBox;
+    [SerializeField] private TMP_Text overflowText;
+    [SerializeField] private RectTransform overflowBox;
+    [SerializeField] private CanvasGroup overflowGroup;
+    [SerializeField] private TMP_Text anteText;
+    [SerializeField] private RectTransform anteBox;
+    [SerializeField] private CanvasGroup anteGroup;
 
     private float shownHeight;
     private float numberPunch;
@@ -18,6 +25,17 @@ public class CountdownBar : MonoBehaviour
     private Color barColor;
     private float shownSpeed;
     private float speedPunch;
+    private float shownOverflow = 1;
+    private float overflowAmount;
+    private float overflowPunch;
+    private Vector2 antePosition;
+
+    private void Awake()
+    {
+        antePosition = anteBox.anchoredPosition;
+        anteGroup.alpha = 0;
+        overflowGroup.alpha = 0;
+    }
 
     private void Start()
     {
@@ -77,5 +95,68 @@ public class CountdownBar : MonoBehaviour
         speedText.color = speed <= 0 ? new Color(.2f, .85f, 1) :
             speed < .99f ? new Color(.3f, 1, .42f) :
             speed > 1.01f ? new Color(1, .45f, .12f) : Color.white;
+
+        float overflow = RunData.instance.overflowDrainMultiplier;
+        if(Mathf.Abs(overflow - shownOverflow) > .001f) overflowPunch = .2f;
+        shownOverflow = overflow;
+        overflowAmount = Mathf.MoveTowards(overflowAmount,
+            overflow > 1 ? 1 : 0, Time.unscaledDeltaTime * 5);
+        overflowPunch = Mathf.MoveTowards(overflowPunch, 0,
+            Time.unscaledDeltaTime * 1.8f);
+        overflowGroup.alpha = overflowAmount;
+        overflowBox.localScale = Vector3.one
+            * (.82f + overflowAmount * .18f + overflowPunch);
+        overflowText.text = "OVERFLOW  +40% DRAIN";
+        overflowText.color = new Color(1, .55f, .08f);
+    }
+
+    public void ShowAnte(int cost)
+    {
+        StartCoroutine(AnimateAnte(cost));
+    }
+
+    private IEnumerator AnimateAnte(int cost)
+    {
+        yield return new WaitForSecondsRealtime(.18f);
+        anteText.text = $"ROUND {RunData.instance.round} ANTE\n-{cost} SECONDS";
+        anteGroup.alpha = 1;
+        float time = 0;
+        while(time < .18f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / .18f);
+            amount = 1 - Mathf.Pow(1 - amount, 3);
+            anteBox.localScale = Vector3.one * Mathf.Lerp(.25f, 1.12f, amount);
+            anteBox.anchoredPosition = antePosition
+                + Vector2.up * Mathf.Lerp(-45, 0, amount);
+            anteBox.localRotation = Quaternion.Euler(0, 0,
+                Mathf.Lerp(-8, 1, amount));
+            yield return null;
+        }
+
+        time = 0;
+        while(time < .65f)
+        {
+            time += Time.unscaledDeltaTime;
+            float shake = (1 - time / .65f) * 7;
+            anteBox.anchoredPosition = antePosition
+                + UnityEngine.Random.insideUnitCircle * shake;
+            anteBox.localScale = Vector3.one
+                * (1 + Mathf.Sin(time * 18) * .025f);
+            yield return null;
+        }
+
+        time = 0;
+        while(time < .28f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / .28f);
+            anteGroup.alpha = 1 - amount;
+            anteBox.localScale = Vector3.one * (1 + amount * .18f);
+            yield return null;
+        }
+        anteGroup.alpha = 0;
+        anteBox.anchoredPosition = antePosition;
+        anteBox.localRotation = Quaternion.identity;
     }
 }

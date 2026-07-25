@@ -55,11 +55,16 @@ public class RunData : MonoBehaviour
 
     private float countdownTime;
     private bool timerFrozen;
+    private int antePaidRound;
+    private CountdownBar countdownBar;
     public float countdownValue => Mathf.Max(0, countdown - countdownTime);
     public float roundTimerSpeed =>
         timerSpeed * Mathf.Pow(1.05f, Mathf.Max(0, round - 1));
+    public float overflowDrainMultiplier =>
+        countdownValue > 120 ? 1.4f : 1;
+    public int roundAnte => Mathf.Max(0, round - 3) * 2;
     public float timerDrainSpeed => timerFrozen ? 0 :
-        roundTimerSpeed * (DeckGenerator.instance != null
+        roundTimerSpeed * overflowDrainMultiplier * (DeckGenerator.instance != null
         && currentBoss == 5 ? 1.3f : 1);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -84,6 +89,7 @@ public class RunData : MonoBehaviour
 
         //hud stuff?
         GameObject hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
+        countdownBar = hud.GetComponent<CountdownBar>();
         GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
         powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 2));
         powerupHud.AddComponent<PowerupHUD>();
@@ -106,6 +112,13 @@ public class RunData : MonoBehaviour
         if (scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
         currentBoss = bossRound ?
             bossOrder[(round / 3 - 1) % bossOrder.Count] : -1;
+        if (scene.name == "MainScene" && roundAnte > 0
+        && antePaidRound != round)
+        {
+            antePaidRound = round;
+            countdown = Mathf.Max(0, countdown - roundAnte);
+            countdownBar.ShowAnte(roundAnte);
+        }
     }
 
     private void OnDestroy()
@@ -126,10 +139,13 @@ public class RunData : MonoBehaviour
                 continue;
             }
 
-            countdownTime += Time.unscaledDeltaTime * roundTimerSpeed;
-            if (countdownTime < 1) continue;
-            countdownTime -= 1;
-            countdown--;
+            countdownTime += Time.unscaledDeltaTime
+                * timerDrainSpeed;
+            while (countdownTime >= 1 && countdown > 0)
+            {
+                countdownTime--;
+                countdown--;
+            }
         }
     }
 

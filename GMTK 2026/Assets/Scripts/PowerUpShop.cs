@@ -60,6 +60,10 @@ public class PowerUpShop : MonoBehaviour
 
         rerollButton.onClick.AddListener(Reroll);
         moveToGameButton.onClick.AddListener(MoveToGame);
+        TMP_Text anteText = moveToGameButton.transform.Find("Ante Cost")
+            .GetComponent<TMP_Text>();
+        anteText.text = RunData.instance.roundAnte > 0 ?
+            $"ANTE  -{RunData.instance.roundAnte}s" : "";
         ShowPowerups();
     }
 
