@@ -139,7 +139,6 @@ public sealed class DeckGenerator : MonoBehaviour
     private float bossTime;
     private bool autoPlaying;
     private Vector2 bossDirection;
-    private bool stickyDisabled;
     private List<RectTransform> screensavers = new();
     private List<TMP_Text> screensaverTexts = new();
     private List<Vector2> screensaverDirections = new();
@@ -874,9 +873,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 break;
             }
         }
-        if (boss == 4 && Keyboard.current.escapeKey.wasPressedThisFrame)
-            stickyDisabled = true;
-        if (boss == 4 && !stickyDisabled && Application.isFocused)
+        if (boss == 4 && Application.isFocused)
         {
             Vector2 mouse = Mouse.current.position.ReadValue()
                 + bossDirection * 180 * Time.unscaledDeltaTime;

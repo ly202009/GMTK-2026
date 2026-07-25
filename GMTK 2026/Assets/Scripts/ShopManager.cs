@@ -427,6 +427,7 @@ public class Shop : MonoBehaviour
     }
     void Update()
     {
+        if(Time.timeScale == 0) return;
         int rerollCost = 3 + rerolls * 2;
         rerollText.text = $"REROLL\n-{rerollCost}s";
         rerollButton.interactable = RunData.instance.countdown >= rerollCost

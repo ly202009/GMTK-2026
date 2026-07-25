@@ -94,7 +94,10 @@ public class SoundtrackManager : MonoBehaviour
         }
 
         wasIntense = isIntense;
-        players[activeSource].outputAudioMixerGroup.audioMixer.SetFloat("SoundtrackVolume", 80.0f*(volume-1.0f));
+        float musicVolume = volume * GameSettings.masterVolume
+            * GameSettings.musicVolume;
+        players[activeSource].outputAudioMixerGroup.audioMixer.SetFloat(
+            "SoundtrackVolume", 80.0f * (musicVolume - 1.0f));
         players[activeSource].outputAudioMixerGroup.audioMixer.SetFloat(
                 "SoundtrackPitch", 
                 pitchValue
