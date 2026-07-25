@@ -343,7 +343,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private void PlayCard(GameObject card, int pileIndex)
     {
         AudioManager.PlayCard();
-
+        AudioManager.InvalidPlay();
         CardData playedCard = cardData[card];
         bool closeCall = RunData.instance.countdownValue <= 10;
         combo++;
@@ -552,9 +552,6 @@ public sealed class DeckGenerator : MonoBehaviour
         }
         if (reshuffledCurrentState) return;
         reshuffledCurrentState = true;
-
-        AudioManager.InvalidPlay();
-
         StartCoroutine(ShakeAndReShuffle());
     }
 
