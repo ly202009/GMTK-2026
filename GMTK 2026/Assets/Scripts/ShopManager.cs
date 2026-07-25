@@ -252,8 +252,13 @@ public class Shop : MonoBehaviour
         applyingCard = cards[cardSelect];
         heldCard = -1;
         cardPops[cardSelect] = 0;
+        bool incompatible = (property == CardData.AutoPlay
+            || property == CardData.WildCard)
+            && (shownCards[cardSelect].properties
+            & (CardData.AutoPlay | CardData.WildCard)) != 0;
         if ((shownCards[cardSelect].properties & property) != 0
-        || RunData.instance.countdown < modifierCost || !isAvailable[sealSelect])
+        || incompatible || RunData.instance.countdown < modifierCost
+        || !isAvailable[sealSelect])
         {
             StartCoroutine(ShakeCard(seals[sealSelect], .2f));
             yield return StartCoroutine(ShakeCard(cards[cardSelect], .2f));

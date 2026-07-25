@@ -46,7 +46,7 @@ public class RunData : MonoBehaviour
     public bool handInvalidGain;
     public int countdown = 120;
     public bool autoDraw;
-    public int round = 3;
+    public int round = 1;
     public List<int> bossOrder = new();
     public int currentBoss = -1;
     public List<CardData> deck = new();
