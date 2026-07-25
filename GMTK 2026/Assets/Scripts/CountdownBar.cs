@@ -69,7 +69,12 @@ public class CountdownBar : MonoBehaviour
             Time.unscaledDeltaTime * 1.2f);
         countdownBar.localScale = new Vector3(1 + barPunch, 1, 1);
 
-        if(countdown <= 10)
+        if(RunData.instance.currentBoss >= 0)
+        {
+            countdownImage.color = Color.white;
+            countdownText.color = Color.white;
+        }
+        else if(countdown <= 10)
         {
             float pulse = .5f + Mathf.Sin(Time.unscaledTime * 9) * .5f;
             countdownImage.color = Color.Lerp(barColor,

@@ -74,6 +74,8 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material transparentCardMaterial;
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
+    [SerializeField] private SpriteRenderer background;
+    [SerializeField] private Sprite bossBackground;
     [SerializeField] private TMP_Text drawPileCountText;
     [SerializeField] private TMP_Text comboText;
     [SerializeField] private RectTransform comboPanel;
@@ -157,6 +159,8 @@ public sealed class DeckGenerator : MonoBehaviour
         bossText.gameObject.SetActive(boss >= 0);
         if (boss >= 0)
         {
+            background.sprite = bossBackground;
+            bossText.color = Color.white;
             bossText.text = RunData.Bosses[boss]
                 + "\n<size=22>" + RunData.BossDescriptions[boss] + "</size>";
             bossText.rectTransform.localScale = Vector3.zero;
@@ -830,6 +834,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void Update()
     {
+        if(Time.timeScale == 0) return;
         bossTime += Time.unscaledDeltaTime;
         if (boss == 1 && bossTime >= 3
         && !autoPlaying && animatingCards.Count == 0)

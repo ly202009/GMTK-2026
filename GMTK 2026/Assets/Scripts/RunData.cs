@@ -93,7 +93,7 @@ public class RunData : MonoBehaviour
         hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         countdownBar = hud.GetComponent<CountdownBar>();
         GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
-        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 2));
+        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 3));
         powerupHud.AddComponent<PowerupHUD>();
 
         //audio stuff
