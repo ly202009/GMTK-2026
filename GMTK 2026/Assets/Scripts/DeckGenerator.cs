@@ -490,7 +490,6 @@ public sealed class DeckGenerator : MonoBehaviour
             for (int i = 0; i < piles.Count; i++)
                 if (CardsWork(cardObj, i, true)) return true;
         }
-        AudioManager.InvalidPlay();
         return false;
     }
 
@@ -551,9 +550,11 @@ public sealed class DeckGenerator : MonoBehaviour
             reshuffledCurrentState = false;
             return;
         }
-
         if (reshuffledCurrentState) return;
         reshuffledCurrentState = true;
+
+        AudioManager.InvalidPlay();
+
         StartCoroutine(ShakeAndReShuffle());
     }
 
