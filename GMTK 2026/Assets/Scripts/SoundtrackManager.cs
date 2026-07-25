@@ -25,6 +25,10 @@ public class SoundtrackManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        if (FindObjectsByType<SoundtrackManager>().Length > 1)
+        {
+            Destroy(this.gameObject);
+        }
         DontDestroyOnLoad(this.gameObject);
 
         players = GetComponents<AudioSource>();
@@ -73,7 +77,7 @@ public class SoundtrackManager : MonoBehaviour
             }
         } else if (RunData.instance.countdown > intenseThreshold && wasIntense)
         {
-            if (!RunData.instance.bossRound && SceneManager.GetActiveScene().name == "MainScene")
+            if (!RunData.instance.bossRound)
             {
                 isIntense = false;
             }
@@ -107,6 +111,13 @@ public class SoundtrackManager : MonoBehaviour
             yield return null;
         }
         players[activeSource].volume = 0.0f;
+        for (int i = 0; i < 4; i++)
+        {
+            if (i != inactiveSource)
+            {
+                players[i].volume = 0.0f;
+            }
+        }
         players[inactiveSource].volume = 1.0f;
         activeSource = inactiveSource;
     }
@@ -132,7 +143,7 @@ public class SoundtrackManager : MonoBehaviour
         if (!isIntense){
             changeMusicToScene(next);
         }
-        if (scene.name == "MainScene" && RunData.instance.bossRound)
+        if (next.name == "MainScene" && RunData.instance.bossRound)
         {
             isIntense = true;
         }
