@@ -343,7 +343,6 @@ public sealed class DeckGenerator : MonoBehaviour
     private void PlayCard(GameObject card, int pileIndex)
     {
         AudioManager.PlayCard();
-        AudioManager.InvalidPlay();
         CardData playedCard = cardData[card];
         bool closeCall = RunData.instance.countdownValue <= 10;
         combo++;
@@ -580,9 +579,7 @@ public sealed class DeckGenerator : MonoBehaviour
         if (RunData.instance.handInvalidGain) GainTime(3);
 
         AudioManager.Shuffle();
-
-        yield return StartCoroutine(AnimateShuffle());
-        cardsChanged = true;
+        foreach (List<GameObject> pile in piles) Shuffle(pile);
 
         bool foundPlayableTop = IsHandPlayable();
         for (int i = 0; i < piles.Count && !foundPlayableTop; i++)
@@ -624,6 +621,15 @@ public sealed class DeckGenerator : MonoBehaviour
             }
             foundPlayableTop = IsHandPlayable();
         }
+
+        yield return StartCoroutine(AnimateShuffle());
+        for (int i = 0; i < piles.Count; i++)
+            while (piles[i].Count > 1
+            && (cardData[piles[i][piles[i].Count - 1]].properties
+            & CardData.Transparent) != 0)
+                yield return StartCoroutine(FadeTransparentCard(
+                    piles[i][piles[i].Count - 1], i));
+        cardsChanged = true;
     }
 
     private IEnumerator AnimateShuffle()
@@ -667,8 +673,6 @@ public sealed class DeckGenerator : MonoBehaviour
             }
             yield return null;
         }
-
-        foreach (List<GameObject> pile in piles) Shuffle(pile);
 
         starts.Clear();
         for (int i = 0; i < cards.Count; i++)
@@ -728,6 +732,7 @@ public sealed class DeckGenerator : MonoBehaviour
             cards[i].transform.localScale = scales[i];
             animatingCards.Remove(cards[i]);
         }
+
     }
 
     private IEnumerator ShowCombo(int timeGain, bool bonusTime,
@@ -1264,6 +1269,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private IEnumerator RejectCard(GameObject card)
     {
         if (jumpingCards.Contains(card)) yield break;
+        AudioManager.InvalidPlay();
         jumpingCards.Add(card);
         Vector3 position = card.transform.position;
         float time = 0;
@@ -1340,29 +1346,39 @@ public sealed class DeckGenerator : MonoBehaviour
         card.transform.localScale = normalScale;
         if ((cardData[card].properties & CardData.Transparent) != 0)
         {
-            SpriteRenderer[] renderers =
-                card.GetComponentsInChildren<SpriteRenderer>(true);
-            time = 0;
-
-            while (time < .25f)
-            {
-                time += Time.deltaTime;
-                float amount = Mathf.Clamp01(time / .25f);
-                for (int i = 0; i < renderers.Length; i++)
-                    renderers[i].color = new Color(1, 1, 1, 1 - amount);
-                yield return null;
-            }
-
-            piles[pileIndex].Remove(card);
-            cardData.Remove(card);
-            cardFaces.Remove(card);
-            animatingCards.Remove(card);
-            Destroy(card);
-            cardsChanged = true;
+            yield return StartCoroutine(FadeTransparentCard(card, pileIndex));
             yield break;
         }
 
         animatingCards.Remove(card);
+    }
+
+    private IEnumerator FadeTransparentCard(GameObject card, int pileIndex)
+    {
+        animatingCards.Add(card);
+        SpriteRenderer[] renderers =
+            card.GetComponentsInChildren<SpriteRenderer>(true);
+        Color[] colors = new Color[renderers.Length];
+        for (int i = 0; i < renderers.Length; i++)
+            colors[i] = renderers[i].color;
+
+        float time = 0;
+        while (time < .25f)
+        {
+            time += Time.deltaTime;
+            float amount = Mathf.Clamp01(time / .25f);
+            for (int i = 0; i < renderers.Length; i++)
+                renderers[i].color = new Color(colors[i].r,
+                    colors[i].g, colors[i].b, colors[i].a * (1 - amount));
+            yield return null;
+        }
+
+        piles[pileIndex].Remove(card);
+        cardData.Remove(card);
+        cardFaces.Remove(card);
+        animatingCards.Remove(card);
+        Destroy(card);
+        cardsChanged = true;
     }
 
     private IEnumerator AnimateCardToHand(GameObject card, int handIndex)

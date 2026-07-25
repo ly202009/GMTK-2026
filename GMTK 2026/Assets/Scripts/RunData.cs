@@ -44,7 +44,7 @@ public class RunData : MonoBehaviour
     public bool allowSuitMatching;
     public bool allowFreeze;
     public bool handInvalidGain;
-    public int countdown = 120;
+    public int countdown = 150;
     public bool autoDraw;
     public int round = 1;
     public List<int> bossOrder = new();
@@ -55,13 +55,15 @@ public class RunData : MonoBehaviour
 
     private float countdownTime;
     private bool timerFrozen;
+    private bool inMenu;
     private int antePaidRound;
     private CountdownBar countdownBar;
+    private GameObject hud;
     public float countdownValue => Mathf.Max(0, countdown - countdownTime);
     public float roundTimerSpeed =>
         timerSpeed * Mathf.Pow(1.05f, Mathf.Max(0, round - 1));
     public float overflowDrainMultiplier =>
-        countdownValue > 120 ? 1.4f : 1;
+        countdownValue > 150 ? 1.4f : 1;
     public int roundAnte => Mathf.Max(0, round - 3) * 2;
     public float timerDrainSpeed => timerFrozen ? 0 :
         roundTimerSpeed * overflowDrainMultiplier * (DeckGenerator.instance != null
@@ -88,7 +90,7 @@ public class RunData : MonoBehaviour
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
         //hud stuff?
-        GameObject hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
+        hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         countdownBar = hud.GetComponent<CountdownBar>();
         GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
         powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 2));
@@ -97,18 +99,14 @@ public class RunData : MonoBehaviour
         //audio stuff
         GameObject AudioManager = Instantiate(Resources.Load<GameObject>("AudioManager"), transform);
 
-        CreateDeck();
-        for (int i = 0; i < Bosses.Length; i++) bossOrder.Add(i);
-        for (int i = bossOrder.Count - 1; i > 0; i--)
-        {
-            int j = UnityEngine.Random.Range(0, i + 1);
-            (bossOrder[i], bossOrder[j]) = (bossOrder[j], bossOrder[i]);
-        }
+        ResetRun();
         StartCoroutine(CountdownTimer());
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        SetMenu(scene.name == "MainMenu");
+        if (inMenu) return;
         if (scene.name == "ShopScene" || scene.name == "PowerUpShopScene") round++;
         currentBoss = bossRound ?
             bossOrder[(round / 3 - 1) % bossOrder.Count] : -1;
@@ -132,7 +130,7 @@ public class RunData : MonoBehaviour
         while (true)
         {
             yield return null;
-            if (timerFrozen) continue;
+            if (inMenu || timerFrozen) continue;
             if (countdown <= 0)
             {
                 countdownTime = 0;
@@ -152,6 +150,42 @@ public class RunData : MonoBehaviour
     public void SetTimerFrozen(bool frozen)
     {
         timerFrozen = frozen;
+    }
+
+    public void SetMenu(bool menu)
+    {
+        inMenu = menu;
+        foreach (Transform child in hud.transform)
+            if (child.name != "Scene Fade")
+                child.gameObject.SetActive(!menu);
+    }
+
+    public void ResetRun()
+    {
+        numberOfPiles = 2;
+        handSize = 5;
+        allowDoubles = false;
+        timerSpeed = 1;
+        allowSuitMatching = false;
+        allowFreeze = false;
+        handInvalidGain = false;
+        countdown = 150;
+        autoDraw = false;
+        round = 1;
+        currentBoss = -1;
+        countdownTime = 0;
+        timerFrozen = false;
+        antePaidRound = 0;
+        powerupLevels = new int[8];
+        deck.Clear();
+        bossOrder.Clear();
+        CreateDeck();
+        for (int i = 0; i < Bosses.Length; i++) bossOrder.Add(i);
+        for (int i = bossOrder.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (bossOrder[i], bossOrder[j]) = (bossOrder[j], bossOrder[i]);
+        }
     }
 
     public static int PowerupCost(int power)

@@ -39,7 +39,7 @@ public class CountdownBar : MonoBehaviour
 
     private void Start()
     {
-        shownHeight = RunData.instance.countdownValue * 9;
+        shownHeight = RunData.instance.countdownValue * 7.2f;
         shownCountdown = RunData.instance.countdown;
         barColor = countdownImage.color;
         countdownText.fontStyle = FontStyles.Bold;
@@ -51,7 +51,7 @@ public class CountdownBar : MonoBehaviour
     {
         int countdown = RunData.instance.countdown;
         shownHeight = Mathf.Lerp(shownHeight,
-            RunData.instance.countdownValue * 9,
+            RunData.instance.countdownValue * 7.2f,
             1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
         countdownBar.sizeDelta =
             new Vector2(48, shownHeight);
