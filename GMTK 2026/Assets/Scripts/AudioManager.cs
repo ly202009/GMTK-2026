@@ -57,7 +57,7 @@ public class AudioManager : MonoBehaviour
     public static void PlayCard() { if (instance) instance.Play(instance.playCard, Jitter(.04f), 0.4f); }
     public static void UIDown() { if (instance) instance.Play(instance.uiDown, Jitter(.06f), .3f); }
     public static void UIUp() { if (instance) instance.Play(instance.uiUp, Jitter(.06f), .3f); }
-    public static void InvalidPlay() { if (instance) instance.Play(instance.invalidPlay, Jitter(.06f), .3f); }
+    public static void InvalidPlay() { if (instance) instance.Play(instance.invalidPlay, Jitter(.06f), .6f); }
 
     public static void Combo(int comboTier = 0)
     {
