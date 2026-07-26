@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class SoundtrackManager : MonoBehaviour
 {
+    private static SoundtrackManager instance;
     private string[] scenesWithIntensity = new string[]{"MainScene", "ShopScene", "PowerUpShopScene"};
     [SerializeField] AudioClip introTrack;
     [SerializeField] AudioClip mainLoop;
@@ -22,15 +23,23 @@ public class SoundtrackManager : MonoBehaviour
     private bool wasIntense = false;
     private bool isIntense = false;
     private float pitchValue;
+    private Coroutine crossfade;
+
+    private void Awake()
+    {
+        if(instance != null && instance != this)
+        {
+            enabled = false;
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        if (FindObjectsByType<SoundtrackManager>().Length > 1)
-        {
-            Destroy(this.gameObject);
-        }
-        DontDestroyOnLoad(this.gameObject);
-
         players = GetComponents<AudioSource>();
         players[0].clip = introTrack;
         players[1].clip = mainLoop;
@@ -86,7 +95,7 @@ public class SoundtrackManager : MonoBehaviour
         if (isIntense && !wasIntense)
         {
             inactiveSource = 2;
-            StartCoroutine(crossfadeAudio());
+            StartCrossfade();
 
         } else if (!isIntense && wasIntense)
         {
@@ -106,24 +115,33 @@ public class SoundtrackManager : MonoBehaviour
     private IEnumerator crossfadeAudio()
     {
         float initialPitchValue = pitchValue;
-        for (float t = 0; t <= crossfadeDuration; t += Time.deltaTime)
+        float[] initialVolumes = new float[players.Length];
+        for(int i = 0; i < players.Length; i++)
+            initialVolumes[i] = players[i].volume;
+        float time = 0;
+        float duration = Mathf.Max(.01f, crossfadeDuration);
+        while(time < duration)
         {
-            pitchValue = Mathf.Lerp(initialPitchValue , 1, t/crossfadeDuration);
-            players[inactiveSource].volume = t/crossfadeDuration;
-            players[activeSource].volume = 1-t/crossfadeDuration;
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / duration);
+            pitchValue = Mathf.Lerp(initialPitchValue, 1, amount);
+            for(int i = 0; i < players.Length; i++)
+                players[i].volume = Mathf.Lerp(initialVolumes[i],
+                    i == inactiveSource ? 1 : 0, amount);
             yield return null;
         }
-        players[activeSource].volume = 0.0f;
-        for (int i = 0; i < 4; i++)
-        {
-            if (i != inactiveSource)
-            {
-                players[i].volume = 0.0f;
-            }
-        }
-        players[inactiveSource].volume = 1.0f;
+        for(int i = 0; i < players.Length; i++)
+            players[i].volume = i == inactiveSource ? 1 : 0;
         activeSource = inactiveSource;
+        crossfade = null;
     }
+
+    private void StartCrossfade()
+    {
+        if(crossfade != null) StopCoroutine(crossfade);
+        crossfade = StartCoroutine(crossfadeAudio());
+    }
+
     void changeMusicToScene(Scene scene){
         if (scene.name == "MainScene")
         {
@@ -139,7 +157,7 @@ public class SoundtrackManager : MonoBehaviour
             dynamicEffects = false;
             isIntense = false;
         }
-        StartCoroutine(crossfadeAudio());
+        StartCrossfade();
 }
     void sceneChange(Scene scene, Scene next)
     {
@@ -154,6 +172,8 @@ public class SoundtrackManager : MonoBehaviour
 
     private void OnDestroy()
     {
+        if(instance != this) return;
         SceneManager.activeSceneChanged -= sceneChange;
+        instance = null;
     }
 }
