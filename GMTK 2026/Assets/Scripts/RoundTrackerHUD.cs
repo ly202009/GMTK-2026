@@ -12,9 +12,14 @@ public class RoundTrackerHUD : MonoBehaviour
     private List<TMP_Text> texts = new();
     private List<Image> images = new();
     private List<Image> accents = new();
+    private List<Image> activeIcons = new();
+    private List<Image> bossIcons = new();
     private List<Outline> outlines = new();
     private List<CanvasGroup> groups = new();
-    private List<TMP_Text> arrows = new();
+    private List<Image> arrows = new();
+    private Sprite arrowSprite;
+    private Sprite activeSprite;
+    private Sprite bossSprite;
     private int shownRound;
     private bool moving;
     private float spacing = 142;
@@ -22,6 +27,18 @@ public class RoundTrackerHUD : MonoBehaviour
 
     private void Start()
     {
+        Sprite[] timelineSprites =
+            Resources.LoadAll<Sprite>("Icons and other sprites");
+        foreach(Sprite sprite in timelineSprites)
+        {
+            if(sprite.name == "Arrow")
+                arrowSprite = sprite;
+            if(sprite.name == "Icon Active")
+                activeSprite = sprite;
+            if(sprite.name == "Boss Icon")
+                bossSprite = sprite;
+        }
+
         for(int i = 0; i < 5; i++)
         {
             GameObject card = new GameObject("Round Slot " + i,
@@ -59,6 +76,35 @@ public class RoundTrackerHUD : MonoBehaviour
             accent.raycastTarget = false;
             accents.Add(accent);
 
+            GameObject activeObject = new GameObject("Active Icon",
+                typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            activeObject.transform.SetParent(card.transform, false);
+            RectTransform activeRect =
+                activeObject.GetComponent<RectTransform>();
+            activeRect.anchorMin = new Vector2(0, .5f);
+            activeRect.anchorMax = new Vector2(0, .5f);
+            activeRect.anchoredPosition = new Vector2(21, 0);
+            activeRect.sizeDelta = new Vector2(36, 36);
+            Image activeIcon = activeObject.GetComponent<Image>();
+            activeIcon.sprite = activeSprite;
+            activeIcon.preserveAspect = true;
+            activeIcon.raycastTarget = false;
+            activeIcons.Add(activeIcon);
+
+            GameObject bossObject = new GameObject("Boss Icon",
+                typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            bossObject.transform.SetParent(card.transform, false);
+            RectTransform bossRect = bossObject.GetComponent<RectTransform>();
+            bossRect.anchorMin = new Vector2(0, .5f);
+            bossRect.anchorMax = new Vector2(0, .5f);
+            bossRect.anchoredPosition = new Vector2(21, 0);
+            bossRect.sizeDelta = new Vector2(30, 30);
+            Image bossIcon = bossObject.GetComponent<Image>();
+            bossIcon.sprite = bossSprite;
+            bossIcon.preserveAspect = true;
+            bossIcon.raycastTarget = false;
+            bossIcons.Add(bossIcon);
+
             GameObject textObject = new GameObject("Label",
                 typeof(RectTransform), typeof(CanvasRenderer),
                 typeof(TextMeshProUGUI));
@@ -85,21 +131,18 @@ public class RoundTrackerHUD : MonoBehaviour
             {
                 GameObject arrowObject = new GameObject("Next Arrow " + i,
                     typeof(RectTransform), typeof(CanvasRenderer),
-                    typeof(TextMeshProUGUI));
+                    typeof(Image));
                 arrowObject.transform.SetParent(trackerRoot, false);
                 RectTransform arrowRect =
                     arrowObject.GetComponent<RectTransform>();
                 arrowRect.anchorMin = new Vector2(0, .5f);
                 arrowRect.anchorMax = new Vector2(0, .5f);
-                arrowRect.sizeDelta = new Vector2(26, 52);
+                arrowRect.sizeDelta = new Vector2(28, 28);
                 arrowRect.anchoredPosition = new Vector2(
                     firstPosition + (i + .5f) * spacing, 0);
-                TMP_Text arrow = arrowObject.GetComponent<TMP_Text>();
-                arrow.font = TMP_Settings.defaultFontAsset;
-                arrow.text = "›";
-                arrow.fontSize = 30;
-                arrow.fontStyle = FontStyles.Bold;
-                arrow.alignment = TextAlignmentOptions.Center;
+                Image arrow = arrowObject.GetComponent<Image>();
+                arrow.sprite = arrowSprite;
+                arrow.preserveAspect = true;
                 arrow.raycastTarget = false;
                 arrows.Add(arrow);
             }
@@ -147,12 +190,19 @@ public class RoundTrackerHUD : MonoBehaviour
     {
         bool boss = round % 3 == 0;
         bool current = i == 0;
+        bool hasIcon = current || boss;
         string roundType = boss ?
             RunData.Bosses[RunData.instance.bossOrder[
                 (round / 3 - 1) % RunData.instance.bossOrder.Count]] : "NORMAL";
         texts[i].text = current ?
-            $"NOW  •  R{round}\n{roundType}" :
+            $"NOW  R{round}\n{roundType}" :
             $"ROUND {round}\n{roundType}";
+        texts[i].rectTransform.anchoredPosition =
+            new Vector2(hasIcon ? 17 : 4, 0);
+        texts[i].rectTransform.sizeDelta =
+            new Vector2(hasIcon ? -42 : -16, -4);
+        activeIcons[i].enabled = current;
+        bossIcons[i].enabled = boss;
         images[i].color = boss ?
             current ? new Color(.42f, .045f, .025f, .98f) :
                 new Color(.18f, .025f, .025f, .94f) :
@@ -208,18 +258,24 @@ public class RoundTrackerHUD : MonoBehaviour
         TMP_Text firstText = texts[0];
         Image firstImage = images[0];
         Image firstAccent = accents[0];
+        Image firstActiveIcon = activeIcons[0];
+        Image firstBossIcon = bossIcons[0];
         Outline firstOutline = outlines[0];
         CanvasGroup firstGroup = groups[0];
         cards.RemoveAt(0);
         texts.RemoveAt(0);
         images.RemoveAt(0);
         accents.RemoveAt(0);
+        activeIcons.RemoveAt(0);
+        bossIcons.RemoveAt(0);
         outlines.RemoveAt(0);
         groups.RemoveAt(0);
         cards.Add(firstCard);
         texts.Add(firstText);
         images.Add(firstImage);
         accents.Add(firstAccent);
+        activeIcons.Add(firstActiveIcon);
+        bossIcons.Add(firstBossIcon);
         outlines.Add(firstOutline);
         groups.Add(firstGroup);
 
