@@ -189,6 +189,8 @@ public sealed class DeckGenerator : MonoBehaviour
         bossText.gameObject.SetActive(boss >= 0);
         if (boss >= 0)
         {
+            background.gameObject.SetActive(true);
+            background.transform.position = new Vector3(0, 0, 1);
             bossFrames = BossAnimation.Frames;
             background.sprite = bossFrames[0];
             bossText.color = Color.white;

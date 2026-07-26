@@ -441,7 +441,7 @@ MonoBehaviour:
   intenseLoop: {fileID: 8300000, guid: edf95dba70ed1b54c9d0ebfad6f01fe3, type: 3}
   shopLoop: {fileID: 8300000, guid: 6c1f12e74dc312c4d8da5272cf990efa, type: 3}
   pauseLoop: {fileID: 8300000, guid: fb89e236b5dd23b4383acffa7a0d6fab, type: 3}
-  musicGroup: {fileID: 0}
+  musicGroup: {fileID: -1967549726202116071, guid: 327647d53ed08724c9de1686f72baebf, type: 2}
   intenseThreshold: 20
   crossfadeDuration: 1
   volume: 0.8
