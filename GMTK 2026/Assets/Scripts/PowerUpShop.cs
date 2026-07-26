@@ -56,6 +56,7 @@ public class PowerUpShop : MonoBehaviour
             cardAnimation.holdUpOnPress = true;
             int j = i;
             powerButtons[i].onClick.AddListener(() => BuyPowerup(j));
+            powerButtons[i].gameObject.AddComponent<ShopTooltipTarget>();
         }
 
         rerollButton.onClick.AddListener(Reroll);
@@ -95,6 +96,9 @@ public class PowerUpShop : MonoBehaviour
             powerButtons[i].GetComponent<AnimatedButton>()
                 .PlayEntrance(i * .045f);
             powerTexts[i].color = Color.white;
+            powerButtons[i].GetComponent<ShopTooltipTarget>().Configure(
+                RunData.Powerups[shownPowers[i]].name,
+                RunData.PowerupDescriptions[shownPowers[i]]);
             Image image = powerButtons[i].GetComponent<Image>();
             image.sprite = powerSprites[shownPowers[i]];
             image.type = Image.Type.Simple;

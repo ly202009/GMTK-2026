@@ -45,13 +45,24 @@ public class Shop : MonoBehaviour
     private int heldCard = -1;
     private int sealSelected = -1;
     private int rerolls;
-    private static (int property, string seal, Vector3 sealPosition, int cost)[] Properties =
+    private static (int property, string seal, string name,
+        Vector3 sealPosition, int cost, string description)[] Properties =
     {
-        (CardData.Transparent, "Transparent", new Vector3(.2f, .1f, -.01f), 2),
-        (CardData.AutoPlay, "Autoplay", new Vector3(-.2f, -.1f, -.01f), 5),
-        (CardData.BonusTime, "Bonus Time", new Vector3(0, -.45f, -.01f), 3),
-        (CardData.WildCard, "wildcard", new Vector3(.25f, -15, -.01f), 5),
-        (CardData.Flexible, "+-1", new Vector3(.2f, -.1f, -.01f), 2)
+        (CardData.Transparent, "Transparent", "TRANSPARENT",
+            new Vector3(.2f, .1f, -.01f), 2,
+            "See through the card below. Plays against the first non-transparent card, then fades away."),
+        (CardData.AutoPlay, "Autoplay", "AUTOPLAY",
+            new Vector3(-.2f, -.1f, -.01f), 5,
+            "Plays itself as soon as it has a valid pile. Cannot share a card with Wildcard."),
+        (CardData.BonusTime, "Bonus Time", "BONUS TIME",
+            new Vector3(0, -.45f, -.01f), 3,
+            "Adds extra time to the combo payout whenever this card is played."),
+        (CardData.WildCard, "wildcard", "WILDCARD",
+            new Vector3(.25f, -15, -.01f), 5,
+            "Can be played on any rank. Cannot share a card with Autoplay."),
+        (CardData.Flexible, "+-1", "FLEXIBLE",
+            new Vector3(.2f, -.1f, -.01f), 2,
+            "Also counts as one rank higher or lower.")
     };
 
     private IEnumerator MoveThing(GameObject thing, Vector3 start, Vector3 end,
@@ -165,9 +176,26 @@ public class Shop : MonoBehaviour
             cardPops[heldCard] = .13f;
             heldCard = -1;
         }
-        if (applyingCard != null) return;
+        if (applyingCard != null)
+        {
+            if(ShopTooltip.instance != null)
+                ShopTooltip.instance.Hide(this);
+            return;
+        }
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
         Collider2D hoveredCollider = Physics2D.OverlapPoint(mousePos);
+        int hoveredSeal = hoveredCollider == null ? -1 :
+            Array.IndexOf(seals, hoveredCollider.gameObject);
+        if(hoveredSeal >= 0 && isAvailable[hoveredSeal]
+        && ShopTooltip.instance != null)
+        {
+            int i = shownSeal[hoveredSeal];
+            ShopTooltip.instance.Show(this,
+                $"{Properties[i].name}  -{Properties[i].cost}s",
+                Properties[i].description);
+        }
+        else if(ShopTooltip.instance != null)
+            ShopTooltip.instance.Hide(this);
 
         if (Mouse.current.leftButton.wasPressedThisFrame && hoveredCollider != null)
         {
@@ -439,5 +467,11 @@ public class Shop : MonoBehaviour
             cardSelected = -1;
             sealSelected = -1;
         }
+    }
+
+    private void OnDisable()
+    {
+        if(ShopTooltip.instance != null)
+            ShopTooltip.instance.Hide(this);
     }
 }

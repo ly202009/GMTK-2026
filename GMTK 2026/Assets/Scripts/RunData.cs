@@ -20,6 +20,17 @@ public class RunData : MonoBehaviour
         ("INVALID HAND GAIN", 6, "invalid hand"),
         ("AUTO DRAW", 5, "Autodraw Powerup")
     };
+    public static string[] PowerupDescriptions =
+    {
+        "PASSIVE\nAdds one playable speed pile next round.",
+        "PASSIVE\nAdds one card slot to your hand next round.",
+        "ACTIVE  [2]\nOnce per round, matching ranks are valid for 10 seconds.",
+        "PASSIVE\nMultiplies countdown drain speed by 0.70.",
+        "ACTIVE  [1]\nOnce per round, matching suits are valid for 10 seconds.",
+        "ACTIVE  [3]\nOnce per round, freezes countdown drain for 10 seconds.",
+        "PASSIVE\nGain 3 seconds when an invalid hand forces a reshuffle.",
+        "PASSIVE\nAutomatically refills empty hand slots after playing a card."
+    };
     public static string[] Bosses =
     {
         "0100", "OVERFLOW", "BLACK BOX", "TRUNCATE",
@@ -94,7 +105,7 @@ public class RunData : MonoBehaviour
         hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         countdownBar = hud.GetComponent<CountdownBar>();
         GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
-        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 4));
+        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 5));
         powerupHud.AddComponent<PowerupHUD>();
 
         //audio stuff
@@ -303,6 +314,8 @@ public class PowerupHUD : MonoBehaviour
             RectTransform rect = entries[i].GetComponent<RectTransform>();
             Button button = entries[i].GetComponent<Button>();
             button.onClick.AddListener(() => ClickPowerup(j));
+            entries[i].AddComponent<ShopTooltipTarget>().Configure(
+                RunData.Powerups[i].name, RunData.PowerupDescriptions[i]);
             entryAnimations[i] =
                 entries[i].GetComponent<AnimatedButton>();
             icons[i] = entries[i].transform.Find("Icon")
