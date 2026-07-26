@@ -47,7 +47,7 @@ public class PauseMenu : MonoBehaviour
     private void Start()
     {
         Screen.fullScreen = GameSettings.fullscreen;
-        for(int i = 0; i < buttons.Length; i++)
+        for (int i = 0; i < buttons.Length; i++)
         {
             buttons[i] = i == 0 ? buttonTemplate :
                 Instantiate(buttonTemplate, buttonTemplate.transform.parent);
@@ -67,13 +67,13 @@ public class PauseMenu : MonoBehaviour
         panel.localRotation = Quaternion.Euler(0, 0,
             (1 - openAmount) * -3);
 
-        if(RunData.instance.countdown <= 0) return;
-        if(SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
+        if (RunData.instance.countdown <= 0) return;
+        if (SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
             return;
-        if(Keyboard.current == null
+        if (Keyboard.current == null
         || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
-        if(!open) Open();
-        else if(settings) ShowPause();
+        if (!open) Open();
+        else if (settings) ShowPause();
         else Close();
     }
 
@@ -83,7 +83,8 @@ public class PauseMenu : MonoBehaviour
         settings = false;
         group.interactable = true;
         group.blocksRaycasts = true;
-        RunData.instance.SetPaused(true);
+        RunData.instance.SetPaused(true);      // freezes game state
+        SoundtrackManager.SetPaused(true);     // crossfades to the pause loop
         Time.timeScale = 0;
         ShowPause();
     }
@@ -94,6 +95,7 @@ public class PauseMenu : MonoBehaviour
         group.interactable = false;
         group.blocksRaycasts = false;
         RunData.instance.SetPaused(false);
+        SoundtrackManager.SetPaused(false);    // crossfades back to the scene loop
         Time.timeScale = 1;
     }
 
@@ -101,13 +103,13 @@ public class PauseMenu : MonoBehaviour
     {
         settings = false;
         title.text = "PAUSED";
-        if(SpeedTutorial.instance != null)
+        if (SpeedTutorial.instance != null)
         {
             SetButton(0, "RESUME", Close, 130);
             SetButton(1, "HOW TO PLAY", Tutorial, 30);
             SetButton(2, "SETTINGS", ShowSettings, -70);
             SetButton(3, "MAIN MENU", MainMenu, -170);
-            for(int i = 4; i < buttons.Length; i++)
+            for (int i = 4; i < buttons.Length; i++)
                 buttons[i].gameObject.SetActive(false);
         }
         else
@@ -115,14 +117,14 @@ public class PauseMenu : MonoBehaviour
             SetButton(0, "RESUME", Close, 80);
             SetButton(1, "SETTINGS", ShowSettings, -35);
             SetButton(2, "MAIN MENU", MainMenu, -150);
-            for(int i = 3; i < buttons.Length; i++)
+            for (int i = 3; i < buttons.Length; i++)
                 buttons[i].gameObject.SetActive(false);
         }
     }
 
     private void Tutorial()
     {
-        if(SpeedTutorial.instance == null) return;
+        if (SpeedTutorial.instance == null) return;
         Close();
         SpeedTutorial.instance.Open();
     }

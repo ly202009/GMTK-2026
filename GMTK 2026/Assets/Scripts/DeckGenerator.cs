@@ -314,7 +314,7 @@ public sealed class DeckGenerator : MonoBehaviour
         if (clickedCollider == null) return;
 
         GameObject clickedCard = clickedCollider.gameObject;
-
+        AudioManager.SelectCard();
         if (handCards.Contains(clickedCard))
         {
             pressedCard = clickedCard;
@@ -844,8 +844,8 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void Update()
     {
-        if(Time.timeScale == 0) return;
-        if(SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
+        if (Time.timeScale == 0) return;
+        if (SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
             return;
         bossTime += Time.unscaledDeltaTime;
         if (boss == 1 && bossTime >= 3

@@ -47,7 +47,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -1967549726202116071, guid: 327647d53ed08724c9de1686f72baebf, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 004c4cc5d07f8a54ca354c3e0216c3a0, type: 3}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -144,7 +144,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -1967549726202116071, guid: 327647d53ed08724c9de1686f72baebf, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cc3626587d4f3a74a8bb0ff2d5524294, type: 3}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -436,10 +436,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2dafc16a55be334f9b767ea40e71ad2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AudioSystem
-  introTrack: {fileID: 8300000, guid: 004c4cc5d07f8a54ca354c3e0216c3a0, type: 3}
-  mainLoop: {fileID: 8300000, guid: faa70e0c33243d845b6bc15c068178c7, type: 3}
-  intenseLoop: {fileID: 8300000, guid: cc3626587d4f3a74a8bb0ff2d5524294, type: 3}
-  shopLoop: {fileID: 8300000, guid: 87dbbe8a4592dfd4fbf4ec5f357e2648, type: 3}
+  introTrack: {fileID: 8300000, guid: a809057c493869b43b7772959653829d, type: 3}
+  mainLoop: {fileID: 8300000, guid: ea2606388b16af4489c7679ebf71c22f, type: 3}
+  intenseLoop: {fileID: 8300000, guid: edf95dba70ed1b54c9d0ebfad6f01fe3, type: 3}
+  shopLoop: {fileID: 8300000, guid: 6c1f12e74dc312c4d8da5272cf990efa, type: 3}
+  pauseLoop: {fileID: 8300000, guid: fb89e236b5dd23b4383acffa7a0d6fab, type: 3}
+  musicGroup: {fileID: 0}
   intenseThreshold: 20
-  crossfadeDuration: 2
-  volume: 0.6
+  crossfadeDuration: 1
+  volume: 0.8
+  loopDelay: 10
+  hardHandoff: 0

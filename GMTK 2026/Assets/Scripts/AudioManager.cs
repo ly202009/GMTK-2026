@@ -11,6 +11,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip[] uiDown;
     [SerializeField] private AudioClip[] uiUp;
     [SerializeField] private AudioClip[] invalidPlay;
+    [SerializeField] private AudioClip[] selectCard;
 
     [SerializeField] private int poolSize = 16;
     [SerializeField, Range(0, 1)] private float masterVolume = .8f;
@@ -59,6 +60,7 @@ public class AudioManager : MonoBehaviour
     public static void UIDown() { if (instance) instance.Play(instance.uiDown, Jitter(.06f), .3f); }
     public static void UIUp() { if (instance) instance.Play(instance.uiUp, Jitter(.06f), .3f); }
     public static void InvalidPlay() { if (instance) instance.Play(instance.invalidPlay, Jitter(.06f), .6f); }
+    public static void SelectCard() { if (instance) instance.Play(instance.selectCard, Jitter(.06f), 1f); }
 
     public static void Combo(int comboTier = 0)
     {

@@ -60,5 +60,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 3748ad81c80a9524595e9eb4facdfd95, type: 3}
   invalidPlay:
   - {fileID: 8300000, guid: 9d02038036fcdc44b810e07ccb5af91e, type: 3}
+  selectCard:
+  - {fileID: 8300000, guid: 7459b3ae76800294caf6e5cf11b9097c, type: 3}
   poolSize: 16
   masterVolume: 0.8

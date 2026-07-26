@@ -127,7 +127,7 @@ ScriptedImporter:
   animatedSpriteImportData:
   - name: Next Round
     originalName: 
-    pivot: {x: 0.5, y: -0.3888889}
+    pivot: {x: 0.5, y: -0.40000004}
     alignment: 9
     border: {x: 0, y: 0, z: 0, w: 0}
     customData: 
@@ -136,7 +136,7 @@ ScriptedImporter:
       x: 4
       y: 4
       width: 32
-      height: 18
+      height: 15
     spriteID: ee4634fbeea9e0348a64cdd395c771e0
     spriteBone: []
     spriteOutline: []
@@ -166,9 +166,9 @@ ScriptedImporter:
       additiveSortOrder: 0
       cellRect:
         x: 0
-        y: 7
+        y: 6
         width: 32
-        height: 18
+        height: 15
       spriteId: ee4634fbeea9e0348a64cdd395c771e0
     linkedCells: []
     tileCells: []

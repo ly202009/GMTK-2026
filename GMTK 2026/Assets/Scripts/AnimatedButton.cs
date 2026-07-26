@@ -28,7 +28,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
     {
         rect = GetComponent<RectTransform>();
         button = GetComponent<Button>();
-        normalScale = Vector3.one;
+        normalScale = rect.localScale;
         normalPosition = rect.anchoredPosition;
         appearTime = 0;
         appearDelay = 0;
