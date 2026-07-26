@@ -188,7 +188,7 @@ public class RunData : MonoBehaviour
         handInvalidGain = false;
         countdown = 150;
         autoDraw = false;
-        round = 1;
+        round = 3;
         currentBoss = -1;
         countdownTime = 0;
         timerFrozen = false;

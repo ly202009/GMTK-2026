@@ -1020,39 +1020,56 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandlePowerups()
     {
+        bool rulesChanged = false;
         if (!usedSuitMatching && RunData.instance.allowSuitMatching
+        && Keyboard.current != null
         && Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             usedSuitMatching = true;
             suitMatchingCountdown = powerupDuration;
+            rulesChanged = true;
         }
 
         if (!usedDoubles && RunData.instance.allowDoubles
+        && Keyboard.current != null
         && Keyboard.current.digit2Key.wasPressedThisFrame)
         {
             usedDoubles = true;
             doublesCountdown = powerupDuration;
+            rulesChanged = true;
         }
 
         if (!usedFreeze && RunData.instance.allowFreeze
+        && Keyboard.current != null
         && Keyboard.current.digit3Key.wasPressedThisFrame)
         {
             usedFreeze = true;
             freezeCountdown = powerupDuration;
         }
 
+        bool suitWasActive = suitMatchingCountdown > 0;
         if (suitMatchingCountdown > 0)
             suitMatchingCountdown = Mathf.Max(0,
                 suitMatchingCountdown - Time.deltaTime);
+        if (suitWasActive && suitMatchingCountdown == 0)
+            rulesChanged = true;
 
+        bool doublesWasActive = doublesCountdown > 0;
         if (doublesCountdown > 0)
             doublesCountdown = Mathf.Max(0, doublesCountdown - Time.deltaTime);
+        if (doublesWasActive && doublesCountdown == 0)
+            rulesChanged = true;
 
         if (freezeCountdown > 0)
             freezeCountdown = Mathf.Max(0,
                 freezeCountdown - Time.deltaTime);
 
         RunData.instance.SetTimerFrozen(freezeCountdown > 0);
+        if(rulesChanged)
+        {
+            reshuffledCurrentState = false;
+            cardsChanged = true;
+        }
     }
 
     public bool PowerupUsed(int power)
@@ -1073,12 +1090,19 @@ public sealed class DeckGenerator : MonoBehaviour
 
     public void RemovePowerup(int power)
     {
+        bool rulesChanged = power == 2 && doublesCountdown > 0
+            || power == 4 && suitMatchingCountdown > 0;
         if (power == 2) doublesCountdown = 0;
         if (power == 4) suitMatchingCountdown = 0;
         if (power == 5)
         {
             freezeCountdown = 0;
             RunData.instance.SetTimerFrozen(false);
+        }
+        if(rulesChanged)
+        {
+            reshuffledCurrentState = false;
+            cardsChanged = true;
         }
     }
 

@@ -39,6 +39,7 @@ public class SceneTransition : MonoBehaviour
         loading = true;
         fadeGroup.blocksRaycasts = true;
         yield return Fade(fadeGroup.alpha, 1, .14f);
+        AudioManager.StopAll();
         SceneManager.LoadScene(scene);
         yield return null;
         yield return Fade(1, 0, .2f);

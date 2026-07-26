@@ -95,6 +95,7 @@ public class PauseMenu : MonoBehaviour
         group.blocksRaycasts = false;
         RunData.instance.SetPaused(false);
         Time.timeScale = 1;
+        AudioManager.StopAll();
     }
 
     private void ShowPause()
