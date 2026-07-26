@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class ShopTooltip : MonoBehaviour
 {
@@ -20,6 +21,10 @@ public class ShopTooltip : MonoBehaviour
     {
         instance = this;
         canvas = GetComponentInParent<Canvas>();
+        Image background = panel.GetComponent<Image>();
+        background.sprite = UIIcons.Get("Tooltip Background");
+        background.color = Color.white;
+        background.type = Image.Type.Simple;
         group.alpha = 0;
         group.blocksRaycasts = false;
     }

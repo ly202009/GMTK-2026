@@ -8,6 +8,7 @@ public class PowerUpShop : MonoBehaviour
     [SerializeField] private Button rerollButton;
     [SerializeField] private TMP_Text rerollText;
     [SerializeField] private Button moveToGameButton;
+    [SerializeField] private Image shopSign;
 
     private Button[] powerButtons = new Button[3];
     private TMP_Text[] powerTexts = new TMP_Text[3];
@@ -18,6 +19,26 @@ public class PowerUpShop : MonoBehaviour
 
     private void Start()
     {
+        Image rerollImage = rerollButton.GetComponent<Image>();
+        rerollImage.sprite = UIIcons.Get("Reroll box");
+        rerollImage.color = Color.white;
+        rerollImage.type = Image.Type.Simple;
+        rerollButton.GetComponent<RectTransform>().sizeDelta =
+            new Vector2(250, 141);
+        rerollText.color = new Color(.2f, .07f, .01f);
+        Image nextImage = moveToGameButton.GetComponent<Image>();
+        nextImage.sprite = UIIcons.Get("Next Round");
+        nextImage.color = Color.white;
+        nextImage.type = Image.Type.Simple;
+        moveToGameButton.GetComponent<RectTransform>().sizeDelta =
+            new Vector2(300, 169);
+        moveToGameButton.transform.Find("Move To Game Text")
+            .GetComponent<TMP_Text>().color = new Color(.02f, .12f, .02f);
+        shopSign.sprite = UIIcons.Get("SHOP sign");
+        shopSign.color = Color.white;
+        shopSign.type = Image.Type.Simple;
+        StartCoroutine(UIIcons.Drop(shopSign.rectTransform));
+
         Sprite fallbackSprite =
             Resources.LoadAll<Sprite>("Powerups/Extra Playable Stacks")[0];
         for (int i = 0; i < powerSprites.Length; i++)

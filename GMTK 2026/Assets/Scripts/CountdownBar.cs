@@ -1,13 +1,60 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+
+public static class UIIcons
+{
+    private static Dictionary<string, Sprite> sprites;
+
+    public static Sprite Get(string name)
+    {
+        if(sprites == null)
+        {
+            sprites = new();
+            Sprite[] loaded =
+                Resources.LoadAll<Sprite>("Icons and other sprites");
+            foreach(Sprite sprite in loaded)
+                sprites[sprite.name] = sprite;
+        }
+        return sprites[name];
+    }
+
+    public static IEnumerator Drop(RectTransform rect)
+    {
+        Vector2 end = rect.anchoredPosition;
+        Vector2 start = end + Vector2.up * 260;
+        float time = 0;
+        rect.anchoredPosition = start;
+        rect.localRotation = Quaternion.Euler(0, 0, -4);
+
+        while(time < .55f)
+        {
+            time += Time.unscaledDeltaTime;
+            float amount = Mathf.Clamp01(time / .55f);
+            float drop = 1 - Mathf.Pow(1 - amount, 3);
+            float settle = Mathf.Sin(amount * Mathf.PI * 3) *
+                (1 - amount) * 12;
+            rect.anchoredPosition = Vector2.Lerp(start, end, drop) +
+                Vector2.down * settle;
+            rect.localRotation = Quaternion.Euler(0, 0,
+                Mathf.Sin(amount * Mathf.PI * 2) * (1 - amount) * 4);
+            yield return null;
+        }
+
+        rect.anchoredPosition = end;
+        rect.localRotation = Quaternion.identity;
+    }
+}
 
 public class CountdownBar : MonoBehaviour
 {
     [SerializeField] private RectTransform countdownBar;
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private Image countdownImage;
+    [SerializeField] private Image countdownFrame;
+    [SerializeField] private Image bottomThreeImage;
     [SerializeField] private RectTransform numberBox;
     [SerializeField] private TMP_Text speedText;
     [SerializeField] private RectTransform speedBox;
@@ -22,7 +69,6 @@ public class CountdownBar : MonoBehaviour
     private float numberPunch;
     private float barPunch;
     private int shownCountdown;
-    private Color barColor;
     private float shownSpeed;
     private float speedPunch;
     private float shownOverflow = 1;
@@ -32,6 +78,15 @@ public class CountdownBar : MonoBehaviour
 
     private void Awake()
     {
+        countdownFrame.sprite = UIIcons.Get("Countdown Bar");
+        countdownFrame.color = Color.white;
+        countdownFrame.type = Image.Type.Simple;
+        countdownImage.sprite = UIIcons.Get("Rest of Time");
+        countdownImage.color = Color.white;
+        countdownImage.type = Image.Type.Simple;
+        bottomThreeImage.sprite = UIIcons.Get("Bottom 3 bar");
+        bottomThreeImage.color = Color.white;
+        bottomThreeImage.type = Image.Type.Simple;
         antePosition = anteBox.anchoredPosition;
         anteGroup.alpha = 0;
         overflowGroup.alpha = 0;
@@ -39,9 +94,8 @@ public class CountdownBar : MonoBehaviour
 
     private void Start()
     {
-        shownHeight = RunData.instance.countdownValue * 7.2f;
+        shownHeight = RunData.instance.countdown * 6.9f;
         shownCountdown = RunData.instance.countdown;
-        barColor = countdownImage.color;
         countdownText.fontStyle = FontStyles.Bold;
         shownSpeed = RunData.instance.timerDrainSpeed;
         speedText.fontStyle = FontStyles.Bold;
@@ -50,11 +104,16 @@ public class CountdownBar : MonoBehaviour
     private void Update()
     {
         int countdown = RunData.instance.countdown;
-        shownHeight = Mathf.Lerp(shownHeight,
-            RunData.instance.countdownValue * 7.2f,
-            1 - Mathf.Exp(-18 * Time.unscaledDeltaTime));
+        shownHeight = countdown * 6.9f;
+        float bottomHeight = Mathf.Min(20.7f, shownHeight);
+        countdownBar.anchoredPosition =
+            new Vector2(13.8f, 20.7f + bottomHeight);
         countdownBar.sizeDelta =
-            new Vector2(48, shownHeight);
+            new Vector2(75.9f, Mathf.Max(0, shownHeight - bottomHeight));
+        bottomThreeImage.rectTransform.anchoredPosition =
+            new Vector2(13.8f, 20.7f);
+        bottomThreeImage.rectTransform.sizeDelta =
+            new Vector2(75.9f, bottomHeight);
 
         if(countdown != shownCountdown)
         {
@@ -67,24 +126,21 @@ public class CountdownBar : MonoBehaviour
         numberBox.localScale = Vector3.one * (1 + numberPunch);
         barPunch = Mathf.MoveTowards(barPunch, 0,
             Time.unscaledDeltaTime * 1.2f);
-        countdownBar.localScale = new Vector3(1 + barPunch, 1, 1);
+        countdownFrame.rectTransform.parent.localScale =
+            new Vector3(1 + barPunch, 1, 1);
 
         if(RunData.instance.currentBoss >= 0)
         {
-            countdownImage.color = Color.white;
             countdownText.color = Color.white;
         }
         else if(countdown <= 10)
         {
             float pulse = .5f + Mathf.Sin(Time.unscaledTime * 9) * .5f;
-            countdownImage.color = Color.Lerp(barColor,
-                new Color(1, .12f, .02f), pulse);
             countdownText.color = Color.Lerp(new Color(1, .08f, .08f),
                 new Color(1, .75f, .12f), pulse);
         }
         else
         {
-            countdownImage.color = barColor;
             countdownText.color = new Color(1, .08f, .08f);
         }
 
