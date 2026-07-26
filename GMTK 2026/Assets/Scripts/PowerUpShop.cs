@@ -73,6 +73,7 @@ public class PowerUpShop : MonoBehaviour
             powerTexts[i].fontSizeMax = 24;
             AnimatedButton cardAnimation =
                 powerButtons[i].GetComponent<AnimatedButton>();
+            cardAnimation.SetBasePosition(rect.anchoredPosition);
             cardAnimation.idleFloat = 8;
             cardAnimation.holdUpOnPress = true;
             int j = i;

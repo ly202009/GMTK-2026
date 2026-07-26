@@ -12,20 +12,21 @@ public class DeathScreen : MonoBehaviour
     [SerializeField] private RectTransform title;
     [SerializeField] private TMP_Text resultText;
     [SerializeField] private Button retryButton;
-    [SerializeField] private Button menuButton;
+    [SerializeField] private Button quitButton;
 
     private bool shown;
     private bool loading;
 
-    private void Awake()
+    private void OnEnable()
     {
         Hide();
+        loading = false;
     }
 
     private void Start()
     {
         retryButton.onClick.AddListener(Retry);
-        menuButton.onClick.AddListener(Menu);
+        quitButton.onClick.AddListener(Quit);
     }
 
     private void Update()
@@ -42,12 +43,13 @@ public class DeathScreen : MonoBehaviour
         if(Keyboard.current != null && Keyboard.current.rKey.wasPressedThisFrame)
             Retry();
         if(Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            Menu();
+            Quit();
     }
 
     private IEnumerator Show()
     {
         shown = true;
+        loading = false;
         RunData.instance.SetTimerFrozen(true);
         Time.timeScale = 0;
         resultText.text = $"ROUND {RunData.instance.round}\nTHE CLOCK WON";
@@ -84,17 +86,19 @@ public class DeathScreen : MonoBehaviour
         RunData.instance.ResetRun();
         RunData.instance.SetMenu(false);
         SceneTransition.Load("MainScene");
-        loading = false;
     }
 
-    private void Menu()
+    private void Quit()
     {
         if(loading) return;
         loading = true;
         Hide();
         Time.timeScale = 1;
-        SceneTransition.Load("MainMenu");
-        loading = false;
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void Hide()

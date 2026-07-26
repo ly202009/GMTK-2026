@@ -735,7 +735,7 @@ MonoBehaviour:
   title: {fileID: 1241}
   resultText: {fileID: 1253}
   retryButton: {fileID: 1263}
-  menuButton: {fileID: 1283}
+  quitButton: {fileID: 1283}
 --- !u!1 &1210
 GameObject:
   m_ObjectHideFlags: 0
@@ -2435,7 +2435,7 @@ GameObject:
   - component: {fileID: 1284}
   - component: {fileID: 1285}
   m_Layer: 5
-  m_Name: Main Menu Button
+  m_Name: Quit Game Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2622,7 +2622,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: MAIN MENU  [ESC]
+  m_text: QUIT GAME  [ESC]
   m_fontAsset: {fileID: 11400000, guid: f3360bf9d2a579748bfe46b553e688bc, type: 2}
   m_sharedMaterial: {fileID: 7374331461821400885, guid: f3360bf9d2a579748bfe46b553e688bc, type: 2}
   m_fontSize: 32

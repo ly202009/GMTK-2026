@@ -29,6 +29,7 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
         rect = GetComponent<RectTransform>();
         button = GetComponent<Button>();
         normalScale = Vector3.one;
+        normalPosition = rect.anchoredPosition;
         appearTime = 0;
         appearDelay = 0;
         punch = 0;
@@ -37,7 +38,6 @@ public class AnimatedButton : MonoBehaviour, IPointerEnterHandler,
 
     private void Start()
     {
-        normalPosition = rect.anchoredPosition;
         if (!entrancePlayed)
             appearDelay = Mathf.Min(rect.GetSiblingIndex() * .02f, .1f);
         TMP_Text text = GetComponentInChildren<TMP_Text>();

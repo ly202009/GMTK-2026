@@ -84,7 +84,6 @@ public class MainMenu : MonoBehaviour
         playButton.interactable = false;
         quitButton.interactable = false;
         RunData.instance.ResetRun();
-        RunData.instance.SetMenu(false);
         SceneTransition.Load("MainScene");
     }
 
