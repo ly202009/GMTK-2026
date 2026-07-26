@@ -68,7 +68,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private const float HandY = -2.3f;
     private const float SpeedPileY = 1.3f;
     private const float DrawPileX = 6f;
-    private const float DrawPileY = -1.7f;
+    private const float DrawPileY = -1.85f;
 
     [SerializeField] private GameObject cardTemplate;
     [SerializeField] private Material transparentCardMaterial;
@@ -845,6 +845,8 @@ public sealed class DeckGenerator : MonoBehaviour
     private void Update()
     {
         if(Time.timeScale == 0) return;
+        if(SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
+            return;
         bossTime += Time.unscaledDeltaTime;
         if (boss == 1 && bossTime >= 3
         && !autoPlaying && animatingCards.Count == 0)

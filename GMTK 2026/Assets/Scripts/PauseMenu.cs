@@ -68,6 +68,8 @@ public class PauseMenu : MonoBehaviour
             (1 - openAmount) * -3);
 
         if(RunData.instance.countdown <= 0) return;
+        if(SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
+            return;
         if(Keyboard.current == null
         || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
         if(!open) Open();
@@ -99,11 +101,30 @@ public class PauseMenu : MonoBehaviour
     {
         settings = false;
         title.text = "PAUSED";
-        SetButton(0, "RESUME", Close, 80);
-        SetButton(1, "SETTINGS", ShowSettings, -35);
-        SetButton(2, "MAIN MENU", MainMenu, -150);
-        for(int i = 3; i < buttons.Length; i++)
-            buttons[i].gameObject.SetActive(false);
+        if(SpeedTutorial.instance != null)
+        {
+            SetButton(0, "RESUME", Close, 130);
+            SetButton(1, "HOW TO PLAY", Tutorial, 30);
+            SetButton(2, "SETTINGS", ShowSettings, -70);
+            SetButton(3, "MAIN MENU", MainMenu, -170);
+            for(int i = 4; i < buttons.Length; i++)
+                buttons[i].gameObject.SetActive(false);
+        }
+        else
+        {
+            SetButton(0, "RESUME", Close, 80);
+            SetButton(1, "SETTINGS", ShowSettings, -35);
+            SetButton(2, "MAIN MENU", MainMenu, -150);
+            for(int i = 3; i < buttons.Length; i++)
+                buttons[i].gameObject.SetActive(false);
+        }
+    }
+
+    private void Tutorial()
+    {
+        if(SpeedTutorial.instance == null) return;
+        Close();
+        SpeedTutorial.instance.Open();
     }
 
     private void ShowSettings()
