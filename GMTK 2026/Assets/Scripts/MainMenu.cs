@@ -9,6 +9,7 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private CanvasGroup menu;
     [SerializeField] private RectTransform title;
     [SerializeField] private RectTransform prompt;
+    [SerializeField] private RectTransform tvZoom;
     [SerializeField] private RectTransform menuPanel;
     [SerializeField] private Button playButton;
     [SerializeField] private Button quitButton;
@@ -53,15 +54,22 @@ public class MainMenu : MonoBehaviour
     {
         showingMenu = true;
         startScreen.blocksRaycasts = false;
+        Vector2 tvPosition = tvZoom.anchoredPosition;
+        Vector3 tvScale = tvZoom.localScale;
         float time = 0;
-        while (time < .22f)
+        while (time < .55f)
         {
             time += Time.unscaledDeltaTime;
-            float amount = Mathf.Clamp01(time / .22f);
-            startScreen.alpha = 1 - amount;
-            menu.alpha = amount;
+            float amount = Mathf.Clamp01(time / .55f);
+            float zoom = amount * amount * (3 - 2 * amount);
+            float fade = Mathf.Clamp01((amount - .7f) / .3f);
+            fade = fade * fade * (3 - 2 * fade);
+            tvZoom.localScale = tvScale * Mathf.Lerp(1, 3.6f, zoom);
+            tvZoom.anchoredPosition = Vector2.Lerp(tvPosition, Vector2.zero, zoom);
+            startScreen.alpha = 1 - fade;
+            menu.alpha = fade;
             menuPanel.localScale = Vector3.one
-                * Mathf.Lerp(.88f, 1, 1 - Mathf.Pow(1 - amount, 3));
+                * Mathf.Lerp(.88f, 1, 1 - Mathf.Pow(1 - fade, 3));
             yield return null;
         }
         startScreen.alpha = 0;

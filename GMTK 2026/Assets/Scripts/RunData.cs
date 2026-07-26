@@ -55,6 +55,7 @@ public class RunData : MonoBehaviour
 
     private float countdownTime;
     private bool timerFrozen;
+    private bool paused;
     private bool inMenu;
     private int antePaidRound;
     private CountdownBar countdownBar;
@@ -65,7 +66,7 @@ public class RunData : MonoBehaviour
     public float overflowDrainMultiplier =>
         countdownValue > 150 ? 1.4f : 1;
     public int roundAnte => Mathf.Max(0, round - 3) * 2;
-    public float timerDrainSpeed => timerFrozen ? 0 :
+    public float timerDrainSpeed => timerFrozen || paused ? 0 :
         roundTimerSpeed * overflowDrainMultiplier * (DeckGenerator.instance != null
         && currentBoss == 5 ? 1.3f : 1);
 
@@ -93,7 +94,7 @@ public class RunData : MonoBehaviour
         hud = Instantiate(Resources.Load<GameObject>("CountdownHUD"), transform);
         countdownBar = hud.GetComponent<CountdownBar>();
         GameObject powerupHud = Instantiate(Resources.Load<GameObject>("PowerupHUD"), hud.transform);
-        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 2));
+        powerupHud.transform.SetSiblingIndex(Mathf.Max(0, hud.transform.childCount - 4));
         powerupHud.AddComponent<PowerupHUD>();
 
         //audio stuff
@@ -152,6 +153,11 @@ public class RunData : MonoBehaviour
         timerFrozen = frozen;
     }
 
+    public void SetPaused(bool value)
+    {
+        paused = value;
+    }
+
     public void SetMenu(bool menu)
     {
         inMenu = menu;
@@ -175,6 +181,7 @@ public class RunData : MonoBehaviour
         currentBoss = -1;
         countdownTime = 0;
         timerFrozen = false;
+        paused = false;
         antePaidRound = 0;
         powerupLevels = new int[8];
         deck.Clear();

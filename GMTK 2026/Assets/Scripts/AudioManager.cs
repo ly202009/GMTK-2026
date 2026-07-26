@@ -47,7 +47,8 @@ public class AudioManager : MonoBehaviour
         AudioSource source = pool[next];
         next = (next + 1) % pool.Length;
         source.pitch = pitch;
-        source.PlayOneShot(clip, volume * masterVolume);
+        source.PlayOneShot(clip, volume * masterVolume
+            * GameSettings.masterVolume * GameSettings.sfxVolume);
     }
 
     private static float Jitter(float amount) => 1 + Random.Range(-amount, amount);

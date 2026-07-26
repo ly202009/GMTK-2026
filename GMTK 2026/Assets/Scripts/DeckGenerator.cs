@@ -74,6 +74,8 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material transparentCardMaterial;
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
+    [SerializeField] private SpriteRenderer background;
+    [SerializeField] private Sprite bossBackground;
     [SerializeField] private TMP_Text drawPileCountText;
     [SerializeField] private TMP_Text comboText;
     [SerializeField] private RectTransform comboPanel;
@@ -95,6 +97,7 @@ public sealed class DeckGenerator : MonoBehaviour
     private List<GameObject> handCards = new();
     private List<List<GameObject>> piles = new();
     private List<GameObject> drawPile = new();
+    private List<CardData> reserveCards = new();
     private HashSet<GameObject> animatingCards = new();
     private HashSet<GameObject> jumpingCards = new();
     private Dictionary<GameObject, float> cardClickPops = new();
@@ -136,7 +139,6 @@ public sealed class DeckGenerator : MonoBehaviour
     private float bossTime;
     private bool autoPlaying;
     private Vector2 bossDirection;
-    private bool stickyDisabled;
     private List<RectTransform> screensavers = new();
     private List<TMP_Text> screensaverTexts = new();
     private List<Vector2> screensaverDirections = new();
@@ -157,6 +159,8 @@ public sealed class DeckGenerator : MonoBehaviour
         bossText.gameObject.SetActive(boss >= 0);
         if (boss >= 0)
         {
+            background.sprite = bossBackground;
+            bossText.color = Color.white;
             bossText.text = RunData.Bosses[boss]
                 + "\n<size=22>" + RunData.BossDescriptions[boss] + "</size>";
             bossText.rectTransform.localScale = Vector3.zero;
@@ -622,6 +626,16 @@ public sealed class DeckGenerator : MonoBehaviour
             foundPlayableTop = IsHandPlayable();
         }
 
+        while (!foundPlayableTop && reserveCards.Count > 0)
+        {
+            CardData data = reserveCards[reserveCards.Count - 1];
+            reserveCards.RemoveAt(reserveCards.Count - 1);
+            data.properties &= ~CardData.Transparent;
+            piles[pileIndex].Add(CreateCard(data));
+            pileIndex = (pileIndex + 1) % piles.Count;
+            foundPlayableTop = IsHandPlayable();
+        }
+
         yield return StartCoroutine(AnimateShuffle());
         for (int i = 0; i < piles.Count; i++)
             yield return StartCoroutine(FadeTransparentTop(i));
@@ -830,6 +844,7 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void Update()
     {
+        if(Time.timeScale == 0) return;
         bossTime += Time.unscaledDeltaTime;
         if (boss == 1 && bossTime >= 3
         && !autoPlaying && animatingCards.Count == 0)
@@ -849,6 +864,7 @@ public sealed class DeckGenerator : MonoBehaviour
                     drawPile.RemoveAt(drawPile.Count - 1);
                     piles[k].Add(replacement);
                 }
+                reserveCards.Add(cardData[card]);
                 cardData.Remove(card);
                 cardFaces.Remove(card);
                 reshuffledCurrentState = false;
@@ -857,9 +873,7 @@ public sealed class DeckGenerator : MonoBehaviour
                 break;
             }
         }
-        if (boss == 4 && Keyboard.current.escapeKey.wasPressedThisFrame)
-            stickyDisabled = true;
-        if (boss == 4 && !stickyDisabled && Application.isFocused)
+        if (boss == 4 && Application.isFocused)
         {
             Vector2 mouse = Mouse.current.position.ReadValue()
                 + bossDirection * 180 * Time.unscaledDeltaTime;
@@ -1375,6 +1389,7 @@ public sealed class DeckGenerator : MonoBehaviour
         }
 
         piles[pileIndex].Remove(card);
+        reserveCards.Add(cardData[card]);
         cardData.Remove(card);
         cardFaces.Remove(card);
         animatingCards.Remove(card);
