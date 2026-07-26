@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
@@ -9,12 +8,13 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private CanvasGroup menu;
     [SerializeField] private RectTransform title;
     [SerializeField] private RectTransform prompt;
+    [SerializeField] private Image promptImage;
+    [SerializeField] private Button promptButton;
     [SerializeField] private RectTransform tvZoom;
     [SerializeField] private RectTransform menuPanel;
     [SerializeField] private Button playButton;
     [SerializeField] private Button quitButton;
 
-    private bool showingMenu;
     private bool starting;
     private Vector2 menuPosition;
 
@@ -27,6 +27,11 @@ public class MainMenu : MonoBehaviour
         menu.interactable = false;
         menu.blocksRaycasts = false;
         menuPosition = menuPanel.anchoredPosition;
+        promptImage.sprite =
+            Resources.LoadAll<Sprite>("start/PRESS TO START")[0];
+        promptImage.color = Color.white;
+        promptImage.preserveAspect = true;
+        promptButton.onClick.AddListener(() => StartCoroutine(ShowMenu()));
         playButton.onClick.AddListener(Play);
         quitButton.onClick.AddListener(Quit);
     }
@@ -35,25 +40,19 @@ public class MainMenu : MonoBehaviour
     {
         title.localScale = Vector3.one
             * (1 + Mathf.Sin(Time.unscaledTime * 2) * .012f);
-        prompt.localScale = Vector3.one
-            * (1 + Mathf.Sin(Time.unscaledTime * 4) * .025f);
+        float pulse = 1 + Mathf.Sin(Time.unscaledTime * 4) * .035f;
+        prompt.localScale = Vector3.one * pulse;
+        float flicker = .82f + Mathf.Sin(Time.unscaledTime * 3) * .12f
+            + Mathf.Sin(Time.unscaledTime * 27) * .06f;
+        promptImage.color = new Color(1, 1, 1, flicker);
         menuPanel.anchoredPosition = menuPosition + Vector2.up
             * Mathf.Sin(Time.unscaledTime * 1.5f) * 3;
-
-        if (showingMenu) return;
-        if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame
-        || Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame
-        || Gamepad.current != null && (Gamepad.current.buttonSouth.wasPressedThisFrame
-        || Gamepad.current.startButton.wasPressedThisFrame)
-        || Touchscreen.current != null
-        && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
-            StartCoroutine(ShowMenu());
     }
 
     private IEnumerator ShowMenu()
     {
-        showingMenu = true;
         startScreen.blocksRaycasts = false;
+        promptButton.interactable = false;
         Vector2 tvPosition = tvZoom.anchoredPosition;
         Vector3 tvScale = tvZoom.localScale;
         float time = 0;
