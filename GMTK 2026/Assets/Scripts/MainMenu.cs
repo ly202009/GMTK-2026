@@ -40,7 +40,7 @@ public class MainMenu : MonoBehaviour
     {
         title.localScale = Vector3.one
             * (1 + Mathf.Sin(Time.unscaledTime * 2) * .012f);
-        float pulse = 1 + Mathf.Sin(Time.unscaledTime * 4) * .035f;
+        float pulse = 1.5f + Mathf.Sin(Time.unscaledTime * 4) * .1f;
         prompt.localScale = Vector3.one * pulse;
         float flicker = .82f + Mathf.Sin(Time.unscaledTime * 3) * .12f
             + Mathf.Sin(Time.unscaledTime * 27) * .06f;
