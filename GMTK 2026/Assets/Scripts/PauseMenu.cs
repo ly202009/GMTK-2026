@@ -97,6 +97,7 @@ public class PauseMenu : MonoBehaviour
         RunData.instance.SetPaused(false);
         SoundtrackManager.SetPaused(false);    // crossfades back to the scene loop
         Time.timeScale = 1;
+        AudioManager.StopAll();
     }
 
     private void ShowPause()

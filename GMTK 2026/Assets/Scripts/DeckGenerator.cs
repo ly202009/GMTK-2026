@@ -51,6 +51,35 @@ public struct CardData
     public int properties;
 }
 
+public static class BossAnimation
+{
+    private static Sprite[] frames;
+
+    public static Sprite[] Frames
+    {
+        get
+        {
+            if(frames != null) return frames;
+            Texture2D[] sheets =
+            {
+                Resources.Load<Texture2D>("bossAnimationIdleSheet0"),
+                Resources.Load<Texture2D>("bossAnimationIdleSheet1")
+            };
+            frames = new Sprite[48];
+            for(int i = 0; i < frames.Length; i++)
+            {
+                int j = i % 24;
+                Texture2D sheet = sheets[i / 24];
+                sheet.filterMode = FilterMode.Point;
+                frames[i] = Sprite.Create(sheet, new Rect(
+                    (j % 4) * 480, (5 - j / 4) * 270, 480, 270),
+                    new Vector2(.5f, .5f), 50);
+            }
+            return frames;
+        }
+    }
+}
+
 public sealed class DeckGenerator : MonoBehaviour
 {
     public static DeckGenerator instance;
@@ -75,7 +104,6 @@ public sealed class DeckGenerator : MonoBehaviour
     [SerializeField] private Material wildCardMaterial;
     [SerializeField] private Material transparentWildCardMaterial;
     [SerializeField] private SpriteRenderer background;
-    [SerializeField] private Sprite bossBackground;
     [SerializeField] private TMP_Text drawPileCountText;
     [SerializeField] private TMP_Text comboText;
     [SerializeField] private RectTransform comboPanel;
@@ -137,6 +165,8 @@ public sealed class DeckGenerator : MonoBehaviour
     private float comboLevelPunch;
     private int boss;
     private float bossTime;
+    private float bossAnimationTime;
+    private Sprite[] bossFrames;
     private bool autoPlaying;
     private Vector2 bossDirection;
     private List<RectTransform> screensavers = new();
@@ -159,7 +189,8 @@ public sealed class DeckGenerator : MonoBehaviour
         bossText.gameObject.SetActive(boss >= 0);
         if (boss >= 0)
         {
-            background.sprite = bossBackground;
+            bossFrames = BossAnimation.Frames;
+            background.sprite = bossFrames[0];
             bossText.color = Color.white;
             bossText.text = RunData.Bosses[boss]
                 + "\n<size=22>" + RunData.BossDescriptions[boss] + "</size>";
@@ -848,6 +879,12 @@ public sealed class DeckGenerator : MonoBehaviour
         if (SpeedTutorial.instance != null && SpeedTutorial.instance.IsOpen)
             return;
         bossTime += Time.unscaledDeltaTime;
+        if(boss >= 0)
+        {
+            bossAnimationTime += Time.deltaTime;
+            background.sprite = bossFrames[
+                Mathf.FloorToInt(bossAnimationTime * 10) % bossFrames.Length];
+        }
         if (boss == 1 && bossTime >= 3
         && !autoPlaying && animatingCards.Count == 0)
         {
@@ -1020,39 +1057,56 @@ public sealed class DeckGenerator : MonoBehaviour
 
     private void HandlePowerups()
     {
+        bool rulesChanged = false;
         if (!usedSuitMatching && RunData.instance.allowSuitMatching
+        && Keyboard.current != null
         && Keyboard.current.digit1Key.wasPressedThisFrame)
         {
             usedSuitMatching = true;
             suitMatchingCountdown = powerupDuration;
+            rulesChanged = true;
         }
 
         if (!usedDoubles && RunData.instance.allowDoubles
+        && Keyboard.current != null
         && Keyboard.current.digit2Key.wasPressedThisFrame)
         {
             usedDoubles = true;
             doublesCountdown = powerupDuration;
+            rulesChanged = true;
         }
 
         if (!usedFreeze && RunData.instance.allowFreeze
+        && Keyboard.current != null
         && Keyboard.current.digit3Key.wasPressedThisFrame)
         {
             usedFreeze = true;
             freezeCountdown = powerupDuration;
         }
 
+        bool suitWasActive = suitMatchingCountdown > 0;
         if (suitMatchingCountdown > 0)
             suitMatchingCountdown = Mathf.Max(0,
                 suitMatchingCountdown - Time.deltaTime);
+        if (suitWasActive && suitMatchingCountdown == 0)
+            rulesChanged = true;
 
+        bool doublesWasActive = doublesCountdown > 0;
         if (doublesCountdown > 0)
             doublesCountdown = Mathf.Max(0, doublesCountdown - Time.deltaTime);
+        if (doublesWasActive && doublesCountdown == 0)
+            rulesChanged = true;
 
         if (freezeCountdown > 0)
             freezeCountdown = Mathf.Max(0,
                 freezeCountdown - Time.deltaTime);
 
         RunData.instance.SetTimerFrozen(freezeCountdown > 0);
+        if(rulesChanged)
+        {
+            reshuffledCurrentState = false;
+            cardsChanged = true;
+        }
     }
 
     public bool PowerupUsed(int power)
@@ -1073,12 +1127,19 @@ public sealed class DeckGenerator : MonoBehaviour
 
     public void RemovePowerup(int power)
     {
+        bool rulesChanged = power == 2 && doublesCountdown > 0
+            || power == 4 && suitMatchingCountdown > 0;
         if (power == 2) doublesCountdown = 0;
         if (power == 4) suitMatchingCountdown = 0;
         if (power == 5)
         {
             freezeCountdown = 0;
             RunData.instance.SetTimerFrozen(false);
+        }
+        if(rulesChanged)
+        {
+            reshuffledCurrentState = false;
+            cardsChanged = true;
         }
     }
 

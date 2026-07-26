@@ -16,6 +16,8 @@ public class DeathScreen : MonoBehaviour
 
     private bool shown;
     private bool loading;
+    private float animationTime;
+    private Image backgroundImage;
 
     private void OnEnable()
     {
@@ -25,6 +27,7 @@ public class DeathScreen : MonoBehaviour
 
     private void Start()
     {
+        backgroundImage = background.GetComponent<Image>();
         retryButton.onClick.AddListener(Retry);
         quitButton.onClick.AddListener(Quit);
     }
@@ -35,6 +38,10 @@ public class DeathScreen : MonoBehaviour
             StartCoroutine(Show());
 
         if(!shown) return;
+        animationTime += Time.unscaledDeltaTime;
+        Sprite[] frames = BossAnimation.Frames;
+        backgroundImage.sprite = frames[
+            Mathf.FloorToInt(animationTime * 10) % frames.Length];
         background.localScale = Vector3.one
             * (1.045f + Mathf.Sin(Time.unscaledTime * 1.4f) * .008f);
         title.localScale = Vector3.one
@@ -50,6 +57,8 @@ public class DeathScreen : MonoBehaviour
     {
         shown = true;
         loading = false;
+        animationTime = 0;
+        backgroundImage.sprite = BossAnimation.Frames[0];
         RunData.instance.SetTimerFrozen(true);
         Time.timeScale = 0;
         resultText.text = $"ROUND {RunData.instance.round}\nTHE CLOCK WON";

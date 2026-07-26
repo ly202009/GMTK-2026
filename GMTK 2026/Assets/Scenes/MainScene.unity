@@ -859,7 +859,6 @@ MonoBehaviour:
   wildCardMaterial: {fileID: 2100000, guid: d448e9bf10a74cfac443d5efa339774f, type: 2}
   transparentWildCardMaterial: {fileID: 2100000, guid: e559fac021b84dfbd554e6fab44a885a, type: 2}
   background: {fileID: 150891059}
-  bossBackground: {fileID: -6635921824904175237, guid: c9d6a72f11e849fc8b3519448d76c0a2, type: 3}
   drawPileCountText: {fileID: 2180000023}
   comboText: {fileID: 2190000023}
   comboPanel: {fileID: 2190000011}

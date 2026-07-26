@@ -45,6 +45,19 @@ public static class UIIcons
 
         rect.anchoredPosition = end;
         rect.localRotation = Quaternion.identity;
+
+        Vector3 scale = rect.localScale;
+        while(rect != null)
+        {
+            float movement = Time.unscaledTime * 1.8f;
+            rect.anchoredPosition = end + new Vector2(
+                Mathf.Cos(movement) * 1.5f, Mathf.Sin(movement) * 6);
+            rect.localRotation = Quaternion.Euler(0, 0,
+                Mathf.Sin(movement) * 1.4f);
+            rect.localScale = scale
+                * (1 + Mathf.Sin(movement * .8f) * .006f);
+            yield return null;
+        }
     }
 }
 

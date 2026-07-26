@@ -62,6 +62,13 @@ public class AudioManager : MonoBehaviour
     public static void InvalidPlay() { if (instance) instance.Play(instance.invalidPlay, Jitter(.06f), .6f); }
     public static void SelectCard() { if (instance) instance.Play(instance.selectCard, Jitter(.06f), 1f); }
 
+    public static void StopAll()
+    {
+        if (!instance) return;
+        for (int i = 0; i < instance.pool.Length; i++)
+            instance.pool[i].Stop();
+    }
+
     public static void Combo(int comboTier = 0)
     {
         if (!instance) return;
